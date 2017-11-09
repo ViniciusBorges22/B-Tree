@@ -1,6 +1,8 @@
 #ifndef ARVORE_B_H_INCLUDED
 #define ARVORE_B_H_INCLUDED
 
+#include "dados.h"
+
 #define ORDEM 5 //ordem da árvore
 
 typedef struct
@@ -17,5 +19,9 @@ typedef struct
     int filhos[ORDEM];   //"ponteiros" (RRN) para os filhos do nó
 }
 no;     //nó da árvore
+
+int busca(tRegistro* registro, int id, FILE* indice);
+long buscaAux(int id, FILE* indice, no atual);
+char *parser(char *buffer, int *pos);
 
 #endif // ARVORE_B_H_INCLUDED

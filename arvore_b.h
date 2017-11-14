@@ -5,6 +5,11 @@
 
 #define ORDEM 5 //ordem da árvore
 
+typedef int boolean;
+#define TRUE 1
+#define FALSE 0
+
+
 typedef struct
 {
     int id;     //id da música
@@ -14,9 +19,11 @@ chave;
 
 typedef struct
 {
+    boolean folha;
     short tam;    //quantidade de chaves armazenadas no nó
     chave chaves[ORDEM-1];    //vetor de chaves
     int filhos[ORDEM];   //"ponteiros" (RRN) para os filhos do nó
+    int folha;
 }
 no;     //nó da árvore
 

@@ -4,6 +4,7 @@
 #include "arvore_b.h"
 #include "dados.h"
 
+
 int busca(tRegistro* registro, int id, FILE* indice)
 {
     int raiz;
@@ -12,7 +13,7 @@ int busca(tRegistro* registro, int id, FILE* indice)
     fseek(indice, raiz*sizeof(no), SEEK_CUR);   //posiciona o ponteiro do índice no registro da raiz
     no atual;                                   //nó auxiliar para buscar na árvore
 
-    fread(&atual, sizeof(no), 1, indice);
+    fread(&atual, sizeof(no), 1, indice);       //Atribui a raiz ao nó "autal"
 
     long byteoffset = buscaAux(id, indice, atual);  //função auxiliar, permite passar o nó atual como argumento para a recursão
     if(byteoffset == -1)                            //caso o byteoffset da chave buscada seja "-1" (não encontrada)
@@ -80,4 +81,68 @@ char *parser(char *buffer, int *pos) {
     buffer[*pos] = '\0';
     (*pos)++;
     return &buffer[posi];
+}
+
+int inserir(int id, char nome[], char genero[], FILE* fpIndice, int byteoffsetReg){
+
+    int RRNraiz;
+    rewind(fpIndice);                               	   //garante que o índice será lido do começo
+    fread(&RRNraiz, sizeof(int), 1, fpIndice);      //lê do índice o RRN da raiz da árvore
+    fseek(fpIndice, RRNraiz*sizeof(no), SEEK_CUR);		 //posiciona o ponteiro do índice no registro da raiz
+
+    no atual;                                    //auxiliar para buscar na árvore
+    fread(&atual, sizeof(no), 1, fpIndice);       //Atribui a raiz ao nó "autal"
+	int RRNaux = RRNraiz;
+
+    if (!buscaFolha(&atual, id, fpIndice, &RRNaux)){
+        return -1;
+    }
+
+
+
+
+}
+
+int buscaFolha(no* atual, int id, FILE* fpIndice, int* atualRRN){
+
+    if(atual->folha == TRUE){
+        return TRUE;
+    }
+
+    int pos = buscaBinaria(atual->chaves, id, 0, atual->tam-1);
+
+    if(pos == -1){
+        return FALSE;			//Retorna erro pois a chave ja esta inserida.
+    }
+
+    *atualRRN = atual->filhos[pos];
+    fseek(fpIndice, *(atualRRN)*sizeof(no) + sizeof(int), SEEK_SET);  //posiciona o ponteiro do arquivo no registro do filho correspondente
+    fread(atual, sizeof(no), 1, fpIndice);
+
+    return buscafolha(atual, id, fpIndice, atualRRN);
+}
+
+
+int buscaBinaria(chave chaves[], int id, int esq, int dir){
+
+    int mid = (esq + dir)/2;
+
+    if(chaves[mid] == id ){
+   		return -1; 						  //Chave já está na arvore
+   	}
+    if(chaves[dir] < id){
+    	return dir+1;
+    }
+    if(chaves[esq] > id){
+    	return esq;
+    }
+    if( esq - dir == 1 ){
+        return dir;
+    }
+    else if(id < chaves[mid]){
+   		return buscaBinaria(chaves, id, esq, mid-1);
+   	}
+    else if(id > chaves[mid]){
+    	return buscaBinaria(chaves, id, mid+1, dir);
+    }
 }

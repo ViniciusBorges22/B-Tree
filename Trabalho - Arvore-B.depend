@@ -1,0 +1,13 @@
+# depslib dependency file v1.0
+1510264074 source:c:\users\vrtornisiello\documents\github\b-tree\arvore_b.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	"arvore_b.h"
+	"dados.h"
+
+1510264074 c:\users\vrtornisiello\documents\github\b-tree\arvore_b.h
+	"dados.h"
+
+1510264074 c:\users\vrtornisiello\documents\github\b-tree\dados.h
+

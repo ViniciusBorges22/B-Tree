@@ -81,13 +81,3 @@ char *parser(char *buffer, int *pos) {
     (*pos)++;
     return &buffer[posi];
 }
-
-void inserir(int id, char nome[], char genero[]){
-
-    FILE* fp = fopen("")
-
-}
-
-
-
-

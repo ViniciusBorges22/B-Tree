@@ -83,25 +83,65 @@ char *parser(char *buffer, int *pos) {
     return &buffer[posi];
 }
 
-int inserir(int id, char nome[], char genero[], FILE* fpIndice, int byteoffsetReg){
+int montarBuffer(tRegistro reg, char* buffer){
+    sprintf(buffer, %d|%s|%s|, reg.id, reg.titulo, reg.genero);
+    return strlen(buffer);
+}
+
+int inserirDado(tRegistro reg, FILE* fpDados, long* byteoffset){
+
+    char buffer[100];
+	char size = montarBuffer(reg, buffer);
+
+    if(fpDados = fopen("dados.dad", ab) != NULL){
+    	if(fgetpos( fpDados,  byteoffset ) != 0)
+            return -1;
+    	fwrite(size, sizeof(size), 1, fpDados);
+        fwrite(buffer, size, 1, fpDados);
+        return 1;
+	}
+    return -1;
+}
+
+int inserirIndice(int id, FILE* fpIndice, long byteoffsetReg){
 
     int RRNraiz;
     rewind(fpIndice);                               	   //garante que o índice será lido do começo
-    fread(&RRNraiz, sizeof(int), 1, fpIndice);      //lê do índice o RRN da raiz da árvore
+    fread(&RRNraiz, sizeof(int), 1, fpIndice);      		//lê do índice o RRN da raiz da árvore
     fseek(fpIndice, RRNraiz*sizeof(no), SEEK_CUR);		 //posiciona o ponteiro do índice no registro da raiz
 
-    no atual;                                    //auxiliar para buscar na árvore
-    fread(&atual, sizeof(no), 1, fpIndice);       //Atribui a raiz ao nó "autal"
+    no atual;                                    	 //auxiliar para buscar na árvore
+    fread(&atual, sizeof(no), 1, fpIndice);         //Atribui a raiz ao nó "atual"
 	int RRNaux = RRNraiz;
 
-    if (!buscaFolha(&atual, id, fpIndice, &RRNaux)){
+    if(!buscaFolha(&atual, id, fpIndice, &RRNaux)){
         return -1;
     }
 
+    inserir();
+}
+
+void inserir(int id, int RRNfolha, long byteoffset){
+
+	rewind(fpIndice);
+    fseek(fpIndice, RRNfolha*sizeof(no), SEEK_CUR);
+
+    no folha;
+
+    fread(&folha, sizeof(no), 1, fpIndice);
+
+	if(no.tam < ORDEM-1){
+      	no.chaves[tam] = id;
+        ordena(no.chaves);
+        return;
+	}
+    else
+        split()
 
 
 
 }
+
 
 int buscaFolha(no* atual, int id, FILE* fpIndice, int* atualRRN){
 

@@ -25,7 +25,7 @@ chave;
 
 typedef struct
 {
-    boolean folha;
+//    boolean folha;
     unsigned short tam;    //quantidade de chaves armazenadas na página
     chave chaves[ORDEM-1];    //vetor de chaves
     int filhos[ORDEM];   //"ponteiros" (RRN) para os filhos da página

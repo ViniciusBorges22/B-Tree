@@ -45,7 +45,7 @@ int busca(tRegistro* registro, int id, FILE* indice)
     fseek(indice, raiz*sizeof(pagina), SEEK_CUR);   //posiciona o ponteiro do índice no registro da raiz
     pagina atual;                                   //página auxiliar para buscar na árvore
 
-    fread(&atual, sizeof(pagina), 1, indice);       //Atribui a raiz à página "autal"
+    fread(&atual, sizeof(pagina), 1, indice);       //Atribui a raiz à página "atual"
 
     unsigned long byteoffset = buscaAux(id, indice, atual);  //função auxiliar, permite passar a página atual como argumento para a recursão
     if(byteoffset == NAOENCONTRADO)
@@ -105,6 +105,43 @@ int buscaBinaria(chave chaves[], int id, int esq, int dir)
    	}
 }
 
+void shiftDireita(chave chaves[], int inicial, int tam)
+{
+    int i;
+    for (i = tam; i > inicial; i--)
+    {
+        chaves[i] = chaves[i-1];
+    }
+}
+
+void atualizaPagina(pagina* atual, int id, unsigned long byteoffset, int RRN_filho)
+{
+    int pos = buscaBinaria(atual->chaves, id, 0, atual->tam-1);
+    shiftDireita(atual->chaves, pos+1, atual->tam-1);
+    atual->chaves[pos].id = id;
+    atual->chaves[pos].byteoffset = byteoffset;
+    atual->filhos[pos+1] = RRN_filho;
+    atual->tam++;
+}
+
+/*
+    Parâmetros da função split:
+
+    id: chave (id da música) a ser inserida na página resultante do split
+    RRN_filho: RRN da página filha à direita da nova chave
+    atual: página onde será realizada o split
+    novaPagina: nova página criada pelo split
+    promo: chave promovida pelo split
+    RRN_filho_promo: RRN da página filha à direita da chave promovida
+    byteoffset: em qual byteoffset o registro correspondente ao "id" se encontra no arquivo de dados
+*/
+
+void split(int id, int RRN_filho, pagina atual, pagina novaPagina, int promo, int RRN_filho_promo, unsigned long byteoffset)
+{
+    pagina aux = atual;
+
+}
+
 int inserir(int id, char titulo[], char genero[])
 {
     unsigned long byteoffsetReg = inserirArq(id, titulo, genero);
@@ -119,7 +156,7 @@ int inserir(int id, char titulo[], char genero[])
     fread(&raiz, sizeof(int), 1, indice);
     int promo = -1, RRN_filho = -1;
     if(inserirArv(raiz, id, &promo, &RRN_filho, indice, byteoffsetReg) == ENCONTRADO)
-        return ENCONTRADO;      //chave já está inserida
+        return ENCONTRADO;      //chave já estava presente na árvore
     fclose(indice);
     return NAOENCONTRADO;       //inserido com sucesso
 }
@@ -152,23 +189,19 @@ int inserirArv(int RRN_atual, int id, int* promo, int* RRN_filho, FILE* indice, 
         int promoAux;
         int RRN_filhoAux;
         int valor_retorno = inserirArv(atual.filhos[pos], id, &promoAux, &RRN_filhoAux, indice, byteoffsetReg);
-        if(valor_retorno == NAOPROMOCAO || valor_retorno == ERRO)
+        if(valor_retorno == NAOPROMOCAO)
             return valor_retorno;
         else if(atual.tam < ORDEM-1)    //se há espaço na página atual
         {
-            atual.chaves[atual.tam].id = promoAux;
-            atual.chaves[atual.tam].byteoffset = byteoffsetReg;
-            atual.filhos[atual.tam+1] = RRN_filhoAux;
-            atual.tam++;
-            //ordena(atual.chaves, atual.tam);
+            atualizaPagina(&atual, promoAux, byteoffsetReg, RRN_filhoAux);
             fseek(indice, RRN_atual*sizeof(pagina) + sizeof(int), SEEK_SET);
             fwrite(&atual, sizeof(pagina), 1, indice);
             return NAOPROMOCAO;
         }
         else
         {
-            pagina novaPagina;      // Nova página criada pelo split
-            //split(promoAux, RRN_filhoAux, &atual, &novaPagina, promo, RRN_filho, byteoffsetReg);
+            pagina novaPagina;      // Nova página que será criada pelo split
+            split(promoAux, RRN_filhoAux, &atual, &novaPagina, promo, RRN_filho, byteoffsetReg);
             fseek(indice, RRN_atual*sizeof(pagina) + sizeof(int), SEEK_SET);
             fwrite(&atual, sizeof(pagina), 1, indice);
             fseek(indice, *RRN_filho*sizeof(pagina) + sizeof(int), SEEK_SET);

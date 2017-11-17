@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include "arvore_b.h"
-#include "dados.h"
 
 long buscaAux(int id, FILE* indice, pagina atual)
 {
@@ -118,11 +117,9 @@ int inserir(int id, char titulo[], char genero[])
     }
     int raiz;
     fread(&raiz, sizeof(int), 1, indice);
-    int *promo, *RRN_filho;
-    *promo = -1;
-    *RRN_filho = -1;
-    if(inserirArv(raiz, id, promo, RRN_filho, indice, byteoffsetReg) == ENCONTRADO)
-        return ENCONTRADO;
+    int promo = -1, RRN_filho = -1;
+    if(inserirArv(raiz, id, &promo, &RRN_filho, indice, byteoffsetReg) == ENCONTRADO)
+        return ENCONTRADO;      //chave já está inserida
     fclose(indice);
     return NAOENCONTRADO;       //inserido com sucesso
 }
@@ -152,16 +149,16 @@ int inserirArv(int RRN_atual, int id, int* promo, int* RRN_filho, FILE* indice, 
         int pos = buscaBinaria(atual.chaves, id, 0, atual.tam - 1);
         if(pos == -1)            //se a chave já se encontra na árvore
             return ENCONTRADO;   //retorna código de "chave já existente"
-        int* promoAux;
-        int* RRN_filhoAux;
-        int valor_retorno = inserirArv(atual.filhos[pos], id, promoAux, RRN_filhoAux, indice, byteoffsetReg);
+        int promoAux;
+        int RRN_filhoAux;
+        int valor_retorno = inserirArv(atual.filhos[pos], id, &promoAux, &RRN_filhoAux, indice, byteoffsetReg);
         if(valor_retorno == NAOPROMOCAO || valor_retorno == ERRO)
             return valor_retorno;
         else if(atual.tam < ORDEM-1)    //se há espaço na página atual
         {
-            atual.chaves[atual.tam].id = *promoAux;
+            atual.chaves[atual.tam].id = promoAux;
             atual.chaves[atual.tam].byteoffset = byteoffsetReg;
-            atual.filhos[atual.tam+1] = *RRN_filhoAux;
+            atual.filhos[atual.tam+1] = RRN_filhoAux;
             atual.tam++;
             //ordena(atual.chaves, atual.tam);
             fseek(indice, RRN_atual*sizeof(pagina) + sizeof(int), SEEK_SET);
@@ -171,7 +168,7 @@ int inserirArv(int RRN_atual, int id, int* promo, int* RRN_filho, FILE* indice, 
         else
         {
             pagina novaPagina;      // Nova página criada pelo split
-            //split(*promoAux, *RRN_filhoAux, &atual, &novaPagina, promo, RRN_filho, byteoffsetReg);
+            //split(promoAux, RRN_filhoAux, &atual, &novaPagina, promo, RRN_filho, byteoffsetReg);
             fseek(indice, RRN_atual*sizeof(pagina) + sizeof(int), SEEK_SET);
             fwrite(&atual, sizeof(pagina), 1, indice);
             fseek(indice, *RRN_filho*sizeof(pagina) + sizeof(int), SEEK_SET);

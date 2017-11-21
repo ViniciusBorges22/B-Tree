@@ -5,7 +5,6 @@
 
 #define ORDEM 5 // Ordem da árvore
 
-typedef int boolean;
 #define TRUE 1
 #define FALSE 0
 
@@ -25,7 +24,6 @@ chave;
 
 typedef struct
 {
-//    boolean folha;
     unsigned short tam;    //quantidade de chaves armazenadas na página
     chave chaves[ORDEM-1];    //vetor de chaves
     int filhos[ORDEM];   //"ponteiros" (RRN) para os filhos da página
@@ -38,5 +36,8 @@ char *parser(char *buffer, int *pos);
 int buscaBinaria(chave chaves[], int id, int esq, int dir);
 int inserir(int id, char titulo[], char genero[]);
 int inserirArv(int RRN_atual, int id, int* promo, int* RRN_filho, FILE* indice, unsigned long byteoffsetReg);
+void split(int id, int RRN_filho, pagina atual, pagina novaPagina, int* promo, int* RRN_filho_promo, unsigned long byteoffset);
+void atualizaPagina(pagina* atual, int id, int RRN_filho, unsigned long byteoffset);
+void shiftDireita(chave chaves[], int inicial, int tam);
 
 #endif // ARVORE_B_H_INCLUDED

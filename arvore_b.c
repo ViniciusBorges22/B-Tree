@@ -3,40 +3,6 @@
 #include <string.h>
 #include "arvore_b.h"
 
-long buscaAux(int id, FILE* indice, pagina atual)
-{
-    int i;
-    for(i = 0; i < atual.tam; i++)              //percorre todas as chaves da página
-    {
-        if(id < atual.chaves[i].id)             //caso o id procurado seja menor que o id da chave atual, procura no filho à esquerda da chave atual
-        {
-            int rrn = atual.filhos[i];
-            if(rrn == -1)                       //caso atual seja uma página folha, retorna o código de "chave não encontrada"
-                return NAOENCONTRADO;
-            fseek(indice, rrn*sizeof(pagina) + sizeof(int), SEEK_SET);  //posiciona o ponteiro do arquivo no registro do filho correspondente
-                                                                    //"sizeof(int)" é somado ao offset para considerar o cabeçalho do índice
-            fread(&atual, sizeof(pagina), 1, indice);   //a página filha é armazenado na página atual
-            return buscaAux(id, indice, atual);     //chama recursivamente a função
-        }
-        else if(id > atual.chaves[i].id)
-        {
-            if(i == atual.tam - 1 || id < atual.chaves[i+1].id)           //caso o id procurado esteja entre duas chaves consecutivas, procura no filho à direita da chave atual
-            {
-                fseek(indice, (atual.filhos[i+1])*sizeof(pagina) + sizeof(int), SEEK_SET);    //posiciona o ponteiro do arquivo no registro do filho correspondente
-                fread(&atual, sizeof(pagina), 1, indice);   //a página filha é armazenada na página atual
-                return buscaAux(id, indice, atual);     //chama recursivamente a função
-            }
-            else                                //caso o id procurado seja maior que o id das duas chaves consecutivas, continua o loop
-                continue;
-        }
-        else                                    //caso o id procurado seja igual ao id da chave atual, retorna o byteoffset dessa chave
-        {
-            return atual.chaves[i].byteoffset;
-        }
-    }
-    return NAOENCONTRADO;
-}
-
 int busca(tRegistro* registro, int id, FILE* indice)
 {
     int raiz;
@@ -49,9 +15,7 @@ int busca(tRegistro* registro, int id, FILE* indice)
 
     unsigned long byteoffset = buscaAux(id, indice, atual);  //função auxiliar, permite passar a página atual como argumento para a recursão
     if(byteoffset == NAOENCONTRADO)
-    {
         return NAOENCONTRADO;               //retorna o código de "chave não encontrada"
-    }
 
     FILE* dados;
     if((dados = fopen("dados.dad", "rb")) == NULL)
@@ -71,6 +35,38 @@ int busca(tRegistro* registro, int id, FILE* indice)
     return ENCONTRADO;                          //código de "chave encontrada"
 }
 
+long buscaAux(int id, FILE* indice, pagina atual)
+{
+    int i;
+    for(i = 0; i < atual.tam; i++)              //percorre todas as chaves da página
+    {
+        if(id < atual.chaves[i].id)             //caso o id procurado seja menor que o id da chave atual, procura no filho à esquerda da chave atual
+        {
+            int rrn = atual.filhos[i];
+            if(rrn == -1)                       //caso atual seja uma página folha, retorna o código de "chave não encontrada"
+                return NAOENCONTRADO;
+            fseek(indice, rrn*sizeof(pagina) + sizeof(int), SEEK_SET);  //posiciona o ponteiro do arquivo no registro do filho correspondente
+                                                                        //"sizeof(int)" é somado ao offset para considerar o cabeçalho do índice
+            fread(&atual, sizeof(pagina), 1, indice);   //a página filha é armazenado na página atual
+            return buscaAux(id, indice, atual);         //chama recursivamente a função
+        }
+        else if(id > atual.chaves[i].id)
+        {
+            if(i == atual.tam - 1 || id < atual.chaves[i+1].id)           //caso o id procurado esteja entre duas chaves consecutivas, procura no filho à direita da chave atual
+            {
+                fseek(indice, (atual.filhos[i+1])*sizeof(pagina) + sizeof(int), SEEK_SET);    //posiciona o ponteiro do arquivo no registro do filho correspondente
+                fread(&atual, sizeof(pagina), 1, indice);   //a página filha é armazenada na página atual
+                return buscaAux(id, indice, atual);         //chama recursivamente a função
+            }
+            else                                //caso o id procurado seja maior que o id das duas chaves consecutivas, continua o loop
+                continue;
+        }
+        else                                    //caso o id procurado seja igual ao id da chave atual, retorna o byteoffset dessa chave
+            return atual.chaves[i].byteoffset;
+    }
+    return NAOENCONTRADO;
+}
+
 char *parser(char *buffer, int *pos) {
     int posi = *pos;
 
@@ -83,62 +79,34 @@ char *parser(char *buffer, int *pos) {
 
 int buscaBinaria(chave chaves[], int id, int esq, int dir)
 {
+    if(esq == dir)
+    {
+        if(id < chaves[esq].id)
+            return esq;
+        if(id > chaves[esq].id)
+            return esq+1;
+        else
+            return ENCONTRADO;
+    }
+    if(esq - dir == 1)
+        return dir;
+
     int mid = (esq + dir)/2;
 
-    if(chaves[dir].id < id){
-    	return dir+1;
-    }
-    if(chaves[esq].id > id){
-    	return esq;
-    }
-    if( esq - dir == 1 ){
-        return dir;
-    }
-    else if(id < chaves[mid].id){
+    if(id < chaves[mid].id)
    		return buscaBinaria(chaves, id, esq, mid-1);
-   	}
-    else if(id > chaves[mid].id){
+
+    else if(id > chaves[mid].id)
     	return buscaBinaria(chaves, id, mid+1, dir);
-    }
-    else{
+
+    if(id > chaves[dir].id)
+    	return dir+1;
+
+    else if(id < chaves[esq].id)
+    	return esq;
+
+    else
    		return ENCONTRADO;         //Chave já está na arvore
-   	}
-}
-
-void shiftDireita(chave chaves[], int inicial, int tam)
-{
-    int i;
-    for (i = tam; i > inicial; i--)
-    {
-        chaves[i] = chaves[i-1];
-    }
-}
-
-void atualizaPagina(pagina* atual, int id, unsigned long byteoffset, int RRN_filho)
-{
-    int pos = buscaBinaria(atual->chaves, id, 0, atual->tam-1);
-    shiftDireita(atual->chaves, pos+1, atual->tam-1);
-    atual->chaves[pos].id = id;
-    atual->chaves[pos].byteoffset = byteoffset;
-    atual->filhos[pos+1] = RRN_filho;
-    atual->tam++;
-}
-
-/*
-    Parâmetros da função split:
-
-    id: chave (id da música) a ser inserida na página resultante do split
-    RRN_filho: RRN da página filha à direita da nova chave
-    atual: página onde será realizada o split
-    novaPagina: nova página criada pelo split
-    promo: chave promovida pelo split
-    RRN_filho_promo: RRN da página filha à direita da chave promovida
-    byteoffset: em qual byteoffset o registro correspondente ao "id" se encontra no arquivo de dados
-*/
-
-void split(int id, int RRN_filho, pagina atual, pagina novaPagina, int promo, int RRN_filho_promo, unsigned long byteoffset)
-{
-    pagina aux = atual;
 
 }
 
@@ -154,7 +122,7 @@ int inserir(int id, char titulo[], char genero[])
     }
     int raiz;
     fread(&raiz, sizeof(int), 1, indice);
-    int promo = -1, RRN_filho = -1;
+    int promo, RRN_filho;
     if(inserirArv(raiz, id, &promo, &RRN_filho, indice, byteoffsetReg) == ENCONTRADO)
         return ENCONTRADO;      //chave já estava presente na árvore
     fclose(indice);
@@ -183,9 +151,9 @@ int inserirArv(int RRN_atual, int id, int* promo, int* RRN_filho, FILE* indice, 
         fseek(indice, RRN_atual*sizeof(pagina) + sizeof(int), SEEK_SET);
         pagina atual;
         fread(&atual, sizeof(pagina), 1, indice);
-        int pos = buscaBinaria(atual.chaves, id, 0, atual.tam - 1);
-        if(pos == -1)            //se a chave já se encontra na árvore
-            return ENCONTRADO;   //retorna código de "chave já existente"
+        int pos = buscaBinaria(atual.chaves, id, 0, atual.tam-1);
+        if(pos == ENCONTRADO)     //se a chave já se encontra na árvore
+            return ENCONTRADO;    //retorna código de "chave já existente"
         int promoAux;
         int RRN_filhoAux;
         int valor_retorno = inserirArv(atual.filhos[pos], id, &promoAux, &RRN_filhoAux, indice, byteoffsetReg);
@@ -193,7 +161,7 @@ int inserirArv(int RRN_atual, int id, int* promo, int* RRN_filho, FILE* indice, 
             return valor_retorno;
         else if(atual.tam < ORDEM-1)    //se há espaço na página atual
         {
-            atualizaPagina(&atual, promoAux, byteoffsetReg, RRN_filhoAux);
+            atualizaPagina(&atual, promoAux, RRN_filhoAux, byteoffsetReg);
             fseek(indice, RRN_atual*sizeof(pagina) + sizeof(int), SEEK_SET);
             fwrite(&atual, sizeof(pagina), 1, indice);
             return NAOPROMOCAO;
@@ -208,5 +176,42 @@ int inserirArv(int RRN_atual, int id, int* promo, int* RRN_filho, FILE* indice, 
             fwrite(&novaPagina, sizeof(pagina), 1, indice);
             return PROMOCAO;
         }
+    }
+}
+
+/*
+    Parâmetros da função split:
+
+    id: chave (id da música) a ser inserida na página resultante do split
+    RRN_filho: RRN da página filha à direita da nova chave
+    atual: página onde será realizada o split
+    novaPagina: nova página criada pelo split
+    promo: chave promovida pelo split
+    RRN_filho_promo: RRN da página filha à direita da chave promovida
+    byteoffset: em qual byteoffset o registro correspondente ao "id" se encontra no arquivo de dados
+*/
+
+void split(int id, int RRN_filho, pagina atual, pagina novaPagina, int* promo, int* RRN_filho_promo, unsigned long byteoffset)
+{
+    pagina aux = atual;
+
+}
+
+void atualizaPagina(pagina* atual, int id, int RRN_filho, unsigned long byteoffset)
+{
+    int pos = buscaBinaria(atual->chaves, id, 0, atual->tam-1);
+    shiftDireita(atual->chaves, pos, atual->tam);
+    atual->chaves[pos].id = id;
+    atual->chaves[pos].byteoffset = byteoffset;
+    atual->filhos[pos+1] = RRN_filho;
+    atual->tam++;
+}
+
+void shiftDireita(chave chaves[], int inicial, int tam)
+{
+    int i;
+    for (i = tam; i > inicial; i--)
+    {
+        chaves[i] = chaves[i-1];
     }
 }

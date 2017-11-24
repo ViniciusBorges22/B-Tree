@@ -11,7 +11,9 @@ int main()
     int menu = true;
     int opt;
 
-    while(menu == true){
+    inicializa();
+
+    while(menu){
 
         printf("\n MENU\n");
         printf("\n 1 - Adicionar dado");
@@ -25,7 +27,7 @@ int main()
         switch(opt){
             case 1:
                 system("cls");
-                //inserir
+                inserir(5,"so deus pode me julgar", "rap");
                 break;
             case 2:
                 system("cls");

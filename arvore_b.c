@@ -3,9 +3,23 @@
 #include <string.h>
 #include "arvore_b.h"
 
-void inicializa(pagina* p)
+int inicializa()
 {
-    p->tam = 0;
+    FILE* indice;
+
+    if((indice = fopen("arvore.idx", "wb")) == NULL)
+    {
+        fprintf(stderr, "Erro na abertura do arquivo de indices\n");
+        return ERRO;              //código de erro
+    }
+
+    int raiz = -1;
+    int contador = 0;
+
+    fwrite(&raiz, sizeof(int), 1, indice);
+    fwrite(&contador, sizeof(int), 1, indice);
+
+    return TRUE;
 }
 
 int busca(tRegistro* registro, int id, FILE* indice)
@@ -50,7 +64,7 @@ long buscaAux(int id, FILE* indice, pagina atual)
             int rrn = atual.filhos[i];
             if(rrn == -1)                       //caso atual seja uma página folha, retorna o código de "chave não encontrada"
                 return NAOENCONTRADO;
-            fseek(indice, rrn*sizeof(pagina) + sizeof(int), SEEK_SET);  //posiciona o ponteiro do arquivo no registro do filho correspondente
+            fseek(indice, rrn*sizeof(pagina) + 2*sizeof(int), SEEK_SET);  //posiciona o ponteiro do arquivo no registro do filho correspondente
                                                                         //"sizeof(int)" é somado ao offset para considerar o cabeçalho do índice
             fread(&atual, sizeof(pagina), 1, indice);   //a página filha é armazenado na página atual
             return buscaAux(id, indice, atual);         //chama recursivamente a função
@@ -59,7 +73,7 @@ long buscaAux(int id, FILE* indice, pagina atual)
         {
             if(i == atual.tam - 1 || id < atual.chaves[i+1].id)           //caso o id procurado esteja entre duas chaves consecutivas, procura no filho à direita da chave atual
             {
-                fseek(indice, (atual.filhos[i+1])*sizeof(pagina) + sizeof(int), SEEK_SET);    //posiciona o ponteiro do arquivo no registro do filho correspondente
+                fseek(indice, (atual.filhos[i+1])*sizeof(pagina) + 2*sizeof(int), SEEK_SET);    //posiciona o ponteiro do arquivo no registro do filho correspondente
                 fread(&atual, sizeof(pagina), 1, indice);   //a página filha é armazenada na página atual
                 return buscaAux(id, indice, atual);         //chama recursivamente a função
             }
@@ -117,6 +131,9 @@ int buscaBinaria(chave chaves[], int id, int esq, int dir)
 
 int inserir(int id, char titulo[], char genero[])
 {
+
+    printf("inserir");
+
     unsigned long byteoffsetReg = inserirArq(id, titulo, genero);
 
     FILE* indice;
@@ -145,6 +162,8 @@ int inserir(int id, char titulo[], char genero[])
 
 int inserirArv(int RRN_atual, int id, int* promo, int* RRN_filho, FILE* indice, unsigned long byteoffsetReg)
 {
+    printf(" inserirArv");
+
     if(RRN_atual == -1)
     {
         *promo = id;
@@ -153,7 +172,7 @@ int inserirArv(int RRN_atual, int id, int* promo, int* RRN_filho, FILE* indice, 
     }
     else
     {
-        fseek(indice, RRN_atual*sizeof(pagina) + sizeof(int), SEEK_SET);
+        fseek(indice, RRN_atual*sizeof(pagina) + 2*sizeof(int), SEEK_SET);
         pagina atual;
         fread(&atual, sizeof(pagina), 1, indice);
         int pos = buscaBinaria(atual.chaves, id, 0, atual.tam-1);
@@ -166,18 +185,20 @@ int inserirArv(int RRN_atual, int id, int* promo, int* RRN_filho, FILE* indice, 
             return valor_retorno;
         else if(atual.tam < ORDEM-1)    //se há espaço na página atual
         {
-            atualizaPagina(&atual, promoAux, RRN_filhoAux, byteoffsetReg);
-            fseek(indice, RRN_atual*sizeof(pagina) + sizeof(int), SEEK_SET);
+            atualizaPagina(atual.chaves, atual.filhos, &atual.tam, promoAux, RRN_filhoAux, byteoffsetReg);
+            fseek(indice, RRN_atual*sizeof(pagina) + 2*sizeof(int), SEEK_SET);
             fwrite(&atual, sizeof(pagina), 1, indice);
             return NAOPROMOCAO;
         }
         else
         {
             pagina novaPagina;      // Nova página que será criada pelo split
-            split(promoAux, RRN_filhoAux, &atual, &novaPagina, promo, RRN_filho, byteoffsetReg);
-            fseek(indice, RRN_atual*sizeof(pagina) + sizeof(int), SEEK_SET);
+            if(split(promoAux, RRN_filhoAux, &atual, &novaPagina, promo, RRN_filho, byteoffsetReg) == ERRO){
+              return ERRO;
+            }
+            fseek(indice, RRN_atual*sizeof(pagina) + 2*sizeof(int), SEEK_SET);
             fwrite(&atual, sizeof(pagina), 1, indice);
-            fseek(indice, *RRN_filho*sizeof(pagina) + sizeof(int), SEEK_SET);
+            fseek(indice, *RRN_filho*sizeof(pagina) + 2*sizeof(int), SEEK_SET);
             fwrite(&novaPagina, sizeof(pagina), 1, indice);
             return PROMOCAO;
         }
@@ -198,6 +219,8 @@ int inserirArv(int RRN_atual, int id, int* promo, int* RRN_filho, FILE* indice, 
 
 int split(int id, int RRN_filho, pagina* atual, pagina* novaPagina, int* promo, int* RRN_filho_promo, unsigned long byteoffset)
 {
+    printf(" split");
+
     paginaAux temp;
     int i;
     for(i = 0; i < atual->tam; i++)
@@ -207,10 +230,10 @@ int split(int id, int RRN_filho, pagina* atual, pagina* novaPagina, int* promo, 
     }
     temp.filhos[atual->tam] = atual->filhos[atual->tam];
     temp.tam = atual->tam;
-    atualizaPagina(temp.chaves, temp.filhos, temp.tam, id, RRN_filho, byteoffset);
-    inicializa(novaPagina);
+    atualizaPagina(temp.chaves, temp.filhos, &temp.tam, id, RRN_filho, byteoffset);
+    novaPagina->tam = 0;
     FILE* indice;
-    if(indice = fopen("arvore.idx", "r+b") == NULL)
+    if((indice = fopen("arvore.idx", "r+b")) == NULL)
     {
         fprintf(stderr, "Erro na abertura do arquivo de indice\n");
         return ERRO;              //código de erro
@@ -239,20 +262,26 @@ int split(int id, int RRN_filho, pagina* atual, pagina* novaPagina, int* promo, 
     }
     novaPagina->filhos[temp.tam] = temp.filhos[temp.tam];
     novaPagina->tam = temp.tam - meio - 1;
+
+    return TRUE;
 }
 
 void atualizaPagina(chave chaves[], int filhos[], unsigned short* tam, int id, int RRN_filho, unsigned long byteoffset)
 {
+    printf(" atualizaPagina");
+
     int pos = buscaBinaria(chaves, id, 0, *tam-1);
     shiftDireita(chaves, filhos, pos, *tam);
     chaves[pos].id = id;
     chaves[pos].byteoffset = byteoffset;
     filhos[pos+1] = RRN_filho;
-    *tam++;
+    (*tam)++;
 }
 
 void shiftDireita(chave chaves[], int filhos[], int inicial, int tam)
 {
+    printf(" shiftDireita");
+
     int i;
     for (i = tam; i > inicial; i--)
     {

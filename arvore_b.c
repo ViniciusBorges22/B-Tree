@@ -3,6 +3,11 @@
 #include <string.h>
 #include "arvore_b.h"
 
+void inicializa(pagina* p)
+{
+    p->tam = 0;
+}
+
 int busca(tRegistro* registro, int id, FILE* indice)
 {
     int raiz;
@@ -191,10 +196,37 @@ int inserirArv(int RRN_atual, int id, int* promo, int* RRN_filho, FILE* indice, 
     byteoffset: em qual byteoffset o registro correspondente ao "id" se encontra no arquivo de dados
 */
 
-void split(int id, int RRN_filho, pagina atual, pagina novaPagina, int* promo, int* RRN_filho_promo, unsigned long byteoffset)
+int split(int id, int RRN_filho, pagina atual, pagina novaPagina, int* promo, int* RRN_filho_promo, unsigned long byteoffset)
 {
-    pagina aux = atual;
-
+    paginaAux temp;
+    int i;
+    for(i = 0; i < atual.tam; i++)
+    {
+        temp.chaves[i] = atual.chaves[i];
+        temp.filhos[i] = atual.filhos[i];
+    }
+    temp.filhos[atual.tam] = atual.filhos[atual.tam];
+    temp.tam = atual.tam;
+    atualizaPaginaAux(temp, id, RRN_filho, byteoffset);
+    inicializa(&novaPagina);
+    FILE* f;
+    if(f = fopen("arvore.idx", "r+b") == NULL)
+    {
+        fprintf(stderr, "Erro na abertura do arquivo de indice\n");
+        return ERRO;              //código de erro
+    }
+    fseek(f, sizeof(int), SEEK_SET);
+    int ultimo_rrn;
+    fread(&ultimo_rrn, sizeof(int), 1, f);
+    int meio = temp.tam/2;
+    *promo = temp.chaves[meio].id;
+    *RRN_filho_promo = ultimo_rrn + 1;
+    for(i = 0; i < meio; i++)
+    {
+        atual.chaves[i] = temp.chaves[i];
+        atual.filhos[i] = temp.filhos[i];
+    }
+    atual.filhos[atual.tam] = 
 }
 
 void atualizaPagina(pagina* atual, int id, int RRN_filho, unsigned long byteoffset)
@@ -207,11 +239,13 @@ void atualizaPagina(pagina* atual, int id, int RRN_filho, unsigned long byteoffs
     atual->tam++;
 }
 
-void shiftDireita(chave chaves[], int inicial, int tam)
+void shiftDireita(pagina* atual, int inicial, int tam)
 {
     int i;
     for (i = tam; i > inicial; i--)
     {
-        chaves[i] = chaves[i-1];
+        atual->chaves[i] = atual->chaves[i-1];
+        atual->filhos[i] = atual->filhos[i-1];
     }
+    atual->filhos
 }

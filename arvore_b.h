@@ -46,8 +46,7 @@ int buscaBinaria(chave chaves[], int id, int esq, int dir);
 int inserir(int id, char titulo[], char genero[]);
 int inserirArv(int RRN_atual, int id, int* promo, int* RRN_filho, FILE* indice, unsigned long byteoffsetReg);
 void split(int id, int RRN_filho, pagina atual, pagina novaPagina, int* promo, int* RRN_filho_promo, unsigned long byteoffset);
-void atualizaPagina(pagina* atual, int id, int RRN_filho, unsigned long byteoffset);
-void atualizaPaginaAux(paginaAux* atual, int id, int RRN_filho, unsigned long byteoffset);
-void shiftDireita(chave chaves[], int inicial, int tam);
+void atualizaPagina(chave chaves[], int filhos[], unsigned short* tam, int id, int RRN_filho, unsigned long byteoffset);
+void shiftDireita(chave chaves[], int filhos[], int inicial, int tam);
 
 #endif // ARVORE_B_H_INCLUDED

@@ -27,11 +27,9 @@ unsigned long inserirArq(int id, char titulo[], char genero[])
 }
 
 
-
 /*
     As funções abaixo talvez sejam úteis
 */
-
 
 
 /*
@@ -83,10 +81,7 @@ void inserir(int id, int RRNfolha, long byteoffset){
         return;
 	}
     else
-        split()
-
-
-
+        split();
 }
 
 int buscaFolha(pagina* atual, int id, FILE* fpIndice, int* atualRRN){

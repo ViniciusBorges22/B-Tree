@@ -207,7 +207,7 @@ int split(int id, int RRN_filho, pagina* atual, pagina* novaPagina, int* promo, 
     }
     temp.filhos[atual->tam] = atual->filhos[atual->tam];
     temp.tam = atual->tam;
-    atualizaPagina(temp, id, RRN_filho, byteoffset);
+    atualizaPagina(temp.chaves, temp.filhos, temp.tam, id, RRN_filho, byteoffset);
     inicializa(novaPagina);
     FILE* indice;
     if(indice = fopen("arvore.idx", "r+b") == NULL)
@@ -241,23 +241,22 @@ int split(int id, int RRN_filho, pagina* atual, pagina* novaPagina, int* promo, 
     novaPagina->tam = temp.tam - meio - 1;
 }
 
-void atualizaPagina(pagina* atual, int id, int RRN_filho, unsigned long byteoffset)
+void atualizaPagina(chave chaves[], int filhos[], unsigned short* tam, int id, int RRN_filho, unsigned long byteoffset)
 {
-    int pos = buscaBinaria(atual->chaves, id, 0, atual->tam-1);
-    shiftDireita(atual->chaves, pos, atual->tam);
-    atual->chaves[pos].id = id;
-    atual->chaves[pos].byteoffset = byteoffset;
-    atual->filhos[pos+1] = RRN_filho;
-    atual->tam++;
+    int pos = buscaBinaria(chaves, id, 0, *tam-1);
+    shiftDireita(chaves, filhos, pos, *tam);
+    chaves[pos].id = id;
+    chaves[pos].byteoffset = byteoffset;
+    filhos[pos+1] = RRN_filho;
+    *tam++;
 }
 
-void shiftDireita(pagina* atual, int inicial, int tam)
+void shiftDireita(chave chaves[], int filhos[], int inicial, int tam)
 {
     int i;
     for (i = tam; i > inicial; i--)
     {
-        atual->chaves[i] = atual->chaves[i-1];
-        atual->filhos[i] = atual->filhos[i-1];
+        chaves[i] = chaves[i-1];
+        filhos[i+1] = filhos[i];
     }
-    atual->filhos
 }

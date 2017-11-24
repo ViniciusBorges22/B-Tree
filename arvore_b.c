@@ -196,37 +196,49 @@ int inserirArv(int RRN_atual, int id, int* promo, int* RRN_filho, FILE* indice, 
     byteoffset: em qual byteoffset o registro correspondente ao "id" se encontra no arquivo de dados
 */
 
-int split(int id, int RRN_filho, pagina atual, pagina novaPagina, int* promo, int* RRN_filho_promo, unsigned long byteoffset)
+int split(int id, int RRN_filho, pagina* atual, pagina* novaPagina, int* promo, int* RRN_filho_promo, unsigned long byteoffset)
 {
     paginaAux temp;
     int i;
-    for(i = 0; i < atual.tam; i++)
+    for(i = 0; i < atual->tam; i++)
     {
-        temp.chaves[i] = atual.chaves[i];
-        temp.filhos[i] = atual.filhos[i];
+        temp.chaves[i] = atual->chaves[i];
+        temp.filhos[i] = atual->filhos[i];
     }
-    temp.filhos[atual.tam] = atual.filhos[atual.tam];
-    temp.tam = atual.tam;
-    atualizaPaginaAux(temp, id, RRN_filho, byteoffset);
-    inicializa(&novaPagina);
-    FILE* f;
-    if(f = fopen("arvore.idx", "r+b") == NULL)
+    temp.filhos[atual->tam] = atual->filhos[atual->tam];
+    temp.tam = atual->tam;
+    atualizaPagina(temp, id, RRN_filho, byteoffset);
+    inicializa(novaPagina);
+    FILE* indice;
+    if(indice = fopen("arvore.idx", "r+b") == NULL)
     {
         fprintf(stderr, "Erro na abertura do arquivo de indice\n");
         return ERRO;              //código de erro
     }
-    fseek(f, sizeof(int), SEEK_SET);
+    fseek(indice, sizeof(int), SEEK_SET);
     int ultimo_rrn;
-    fread(&ultimo_rrn, sizeof(int), 1, f);
+    fread(&ultimo_rrn, sizeof(int), 1, indice);
+    ultimo_rrn++;
+    fseek(indice, sizeof(int), SEEK_SET);
+    fwrite(&ultimo_rrn, sizeof(int), 1, indice);
+    fclose(indice);
     int meio = temp.tam/2;
     *promo = temp.chaves[meio].id;
-    *RRN_filho_promo = ultimo_rrn + 1;
+    *RRN_filho_promo = ultimo_rrn;
     for(i = 0; i < meio; i++)
     {
-        atual.chaves[i] = temp.chaves[i];
-        atual.filhos[i] = temp.filhos[i];
+        atual->chaves[i] = temp.chaves[i];
+        atual->filhos[i] = temp.filhos[i];
     }
-    atual.filhos[atual.tam] = 
+    atual->filhos[meio] = temp.filhos[meio];
+    atual->tam = meio;
+    for(i = meio + 1; i < temp.tam; i++)
+    {
+        novaPagina->chaves[i] = temp.chaves[i];
+        novaPagina->filhos[i] = temp.filhos[i];
+    }
+    novaPagina->filhos[temp.tam] = temp.filhos[temp.tam];
+    novaPagina->tam = temp.tam - meio - 1;
 }
 
 void atualizaPagina(pagina* atual, int id, int RRN_filho, unsigned long byteoffset)

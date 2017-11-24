@@ -30,6 +30,14 @@ typedef struct
 }
 pagina;     //página (nó) da árvore
 
+typedef struct
+{
+    unsigned short tam;
+    chave chaves[ORDEM];
+    int filhos[ORDEM+1];
+}
+paginaAux;  //página auxiliar utilizada na função split
+
 void inicializa(pagina* p);
 int busca(tRegistro* registro, int id, FILE* indice);
 long buscaAux(int id, FILE* indice, pagina atual);

@@ -39,7 +39,7 @@ typedef struct
 paginaAux;  // Página auxiliar utilizada na função split
 
 //int inicializa();
-int busca(tRegistro* registro, int id, FILE* indice);
+int busca(tRegistro* registro, int id);
 long buscaAux(int id, FILE* indice, pagina atual);
 char *parser(char *buffer, int *pos);
 int buscaBinaria(chave chaves[], chave novaChave, int esq, int dir);

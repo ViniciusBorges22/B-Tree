@@ -2,32 +2,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include "arvore_b.h"
-/*
-int inicializa()
+
+int busca(tRegistro* registro, int id)
 {
     FILE* indice;
-
-    if((indice = fopen("arvore.idx", "wb")) == NULL)
+    if((indice = fopen("arvore.idx", "rb")) == NULL)
     {
-        fprintf(stderr, "Erro na abertura do arquivo de indices\n");
+        fprintf(stderr, "Erro na abertura do arquivo de dados\n");
         return ERRO;              //código de erro
     }
-
-    int raiz = -1;
-    int contador = 0;
-
-    fwrite(&raiz, sizeof(int), 1, indice);
-    fwrite(&contador, sizeof(int), 1, indice);
-
-    fclose(indice);
-
-    return TRUE;
-}
-*/
-int busca(tRegistro* registro, int id, FILE* indice)
-{
     int raiz;
-    rewind(indice);                             //garante que o índice será lido do começo
     fread(&raiz, sizeof(int), 1, indice);       //lê do índice o RRN da raiz da árvore
     fseek(indice, raiz*sizeof(pagina) + sizeof(int), SEEK_CUR);     //posiciona o ponteiro do índice no registro da raiz
                                                                     //sizeof(int) é somado para considerar o contador no cabeçalho do arquivo
@@ -37,6 +21,7 @@ int busca(tRegistro* registro, int id, FILE* indice)
     long byteoffset = buscaAux(id, indice, atual);  //função auxiliar, permite passar a página atual como argumento para a recursão
     if(byteoffset == NAOENCONTRADO)
         return NAOENCONTRADO;               //retorna o código de "chave não encontrada"
+    fclose(indice);
 
     FILE* dados;
     if((dados = fopen("dados.dad", "rb")) == NULL)
@@ -142,7 +127,9 @@ int inserir(int id, char titulo[], char genero[])
         fprintf(stderr, "Erro na abertura do arquivo de dados\n");
         return ERRO;              //código de erro
     }
+    fseek(dados, 0, SEEK_END);
     long byteoffsetReg = ftell(dados);
+    printf(" %li", byteoffsetReg);
     chave novaChave;
     novaChave.id = id;
     novaChave.byteoffset = byteoffsetReg;
@@ -160,18 +147,6 @@ int inserir(int id, char titulo[], char genero[])
         fwrite(&raiz, sizeof(int), 1, indice);
         fwrite(&contador, sizeof(int), 1, indice);
         rewind(indice);
-        /*
-        pagina inicial;
-        inicial.chaves[0].id = id;
-        inicial.chaves[0].byteoffset = byteoffsetReg;
-        inicial.filhos[0] = -1;
-        inicial.filhos[1] = -1;
-        inicial.tam = 1;
-        raiz = 0;
-        fwrite(&raiz, sizeof(int), 1, indice);
-        fwrite(&inicial, sizeof(pagina), 1, indice);
-        rewind(indice);
-        */
     }
     fread(&raiz, sizeof(int), 1, indice);
     chave promo;

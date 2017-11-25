@@ -9,21 +9,12 @@ char montarBuffer(int id, char titulo[], char genero[], char buffer[])
     return (char) strlen(buffer);
 }
 
-unsigned long inserirArq(int id, char titulo[], char genero[])
+void inserirArq(int id, char titulo[], char genero[], FILE* dados)
 {
-    FILE* dados;
-    if((dados = fopen("dados.dad", "a+b")) == NULL)
-    {
-        fprintf(stderr, "Erro na abertura do arquivo de dados\n");
-        return ERRO;              //código de erro
-    }
-    unsigned long byteoffsetReg = ftell(dados);
     char buffer[300];
     char tam = montarBuffer(id, titulo, genero, buffer);
     fwrite(&tam, sizeof(char), 1, dados);
     fwrite(&buffer, tam, 1, dados);
-    fclose(dados);
-    return byteoffsetReg;
 }
 
 

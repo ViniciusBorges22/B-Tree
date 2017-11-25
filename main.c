@@ -7,11 +7,9 @@
 
 int main()
 {
-
     int menu = true;
     int opt;
-
-    inicializa();
+    FILE* indice;
 
     while(menu){
 
@@ -24,17 +22,28 @@ int main()
 
         scanf("%d", &opt);
 
+        system("clear");
+
         switch(opt){
             case 1:
-                system("cls");
-                inserir(5,"so deus pode me julgar", "rap");
+                printf(" %d", inserir(25,"oloooco", "rap"));
                 break;
             case 2:
-                system("cls");
-                //buscar
+                indice = fopen("arvore.idx", "rb");
+
+                tRegistro registro;
+
+                if(busca(&registro, 25, indice) == NAOENCONTRADO)
+                {
+                    printf("Chave nao encontrada\n");
+                    return 0;
+                }
+
+                fclose(indice);
+
+                printf("ID: %d\nNome: %s\nGenero: %s\n", registro.id, registro.titulo, registro.genero);
                 break;
             case 3:
-                system("cls");
                 //remover
                 break;
             case 0:

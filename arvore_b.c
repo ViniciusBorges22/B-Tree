@@ -74,7 +74,8 @@ long buscaAux(int id, FILE* indice, pagina atual)
     return NAOENCONTRADO;
 }
 
-char *parser(char *buffer, int *pos) {
+char *parser(char *buffer, int *pos)
+{
     int posi = *pos;
 
     while(buffer[*pos]!='|')
@@ -119,8 +120,6 @@ int buscaBinaria(chave chaves[], chave novaChave, int esq, int dir)
 
 int inserir(int id, char titulo[], char genero[])
 {
-    printf("inserir");
-
     FILE* dados;
     if((dados = fopen("dados.dad", "a+b")) == NULL)
     {
@@ -187,8 +186,6 @@ int inserir(int id, char titulo[], char genero[])
 
 int inserirArv(int RRN_atual, chave novaChave, chave* promo, int* RRN_filho, FILE* indice)
 {
-    printf(" inserirArv");
-
     if(RRN_atual == -1)
     {
         *promo = novaChave;
@@ -244,8 +241,6 @@ int inserirArv(int RRN_atual, chave novaChave, chave* promo, int* RRN_filho, FIL
 
 int split(chave novaChave, int RRN_filho, pagina* atual, pagina* novaPagina, chave* promo, int* RRN_filho_promo)
 {
-    printf(" split");
-
     paginaAux temp;
     int i;
     for(i = 0; i < atual->tam; i++)
@@ -292,8 +287,6 @@ int split(chave novaChave, int RRN_filho, pagina* atual, pagina* novaPagina, cha
 
 void atualizaPagina(chave chaves[], int filhos[], unsigned short* tam, chave novaChave, int RRN_filho)
 {
-    printf(" atualizaPagina");
-
     int pos = buscaBinaria(chaves, novaChave, 0, *tam-1);
     shiftDireita(chaves, filhos, pos, *tam);
     chaves[pos] = novaChave;
@@ -303,8 +296,6 @@ void atualizaPagina(chave chaves[], int filhos[], unsigned short* tam, chave nov
 
 void shiftDireita(chave chaves[], int filhos[], int inicial, int tam)
 {
-    printf(" shiftDireita");
-
     int i;
     for (i = tam; i > inicial; i--)
     {

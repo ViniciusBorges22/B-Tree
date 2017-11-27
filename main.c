@@ -13,6 +13,7 @@ int main()
 
     while(menu){
 
+        system("cls");
         printf("\n MENU\n");
         printf("\n 1 - Adicionar dado");
         printf("\n 2 - Buscar dado");
@@ -22,11 +23,9 @@ int main()
 
         scanf("%d", &opt);
 
-        system("clear");
-
         switch(opt){
             case 1:
-                printf(" %d", inserir(25,"so deus pode me julgar", "rap"));
+                printf(" %d", inserir(25, "so deus pode me julgar", "rap"));
                 break;
             case 2:
                 if(busca(&registro, 25) == NAOENCONTRADO)
@@ -34,7 +33,6 @@ int main()
                     printf("Chave nao encontrada\n");
                     return 0;
                 }
-
                 printf("ID: %d\nNome: %s\nGenero: %s\n", registro.id, registro.titulo, registro.genero);
                 break;
             case 3:
@@ -46,6 +44,7 @@ int main()
             default:
                 break;
         }
+        getchar();
     }
 
     return 0;

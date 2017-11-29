@@ -91,32 +91,24 @@ int buscaBinaria(chave chaves[], chave novaChave, int esq, int dir)
     {
         if(novaChave.id < chaves[esq].id)
             return esq;
-        if(novaChave.id > chaves[esq].id)
+        else if(novaChave.id > chaves[esq].id)
             return esq+1;
         else
             return ENCONTRADO;
     }
-    if(esq - dir == 1)
-        return dir;
 
     int mid = (esq + dir)/2;
 
     if(novaChave.id < chaves[mid].id)
-   		return buscaBinaria(chaves, novaChave, esq, mid-1);
+   		return buscaBinaria(chaves, novaChave, esq, mid);
 
     else if(novaChave.id > chaves[mid].id)
     	return buscaBinaria(chaves, novaChave, mid+1, dir);
 
-    if(novaChave.id > chaves[dir].id)
-    	return dir+1;
-
-    else if(novaChave.id < chaves[esq].id)
-    	return esq;
-
     else
    		return ENCONTRADO;         //Chave já está na arvore
-
 }
+
 
 int inserir(int id, char titulo[], char genero[])
 {
@@ -128,7 +120,6 @@ int inserir(int id, char titulo[], char genero[])
     }
     fseek(dados, 0, SEEK_END);
     long byteoffsetReg = ftell(dados);
-    printf(" %li", byteoffsetReg);
     chave novaChave;
     novaChave.id = id;
     novaChave.byteoffset = byteoffsetReg;
@@ -147,6 +138,7 @@ int inserir(int id, char titulo[], char genero[])
         fwrite(&contador, sizeof(int), 1, indice);
         rewind(indice);
     }
+	rewind(indice);
     fread(&raiz, sizeof(int), 1, indice);
     chave promo;
     int RRN_filho;
@@ -242,7 +234,7 @@ int inserirArv(int RRN_atual, chave novaChave, chave* promo, int* RRN_filho, FIL
 int split(chave novaChave, int RRN_filho, pagina* atual, pagina* novaPagina, chave* promo, int* RRN_filho_promo)
 {
     paginaAux temp;
-    int i;
+    int i, j;
     for(i = 0; i < atual->tam; i++)
     {
         temp.chaves[i] = atual->chaves[i];
@@ -274,14 +266,17 @@ int split(chave novaChave, int RRN_filho, pagina* atual, pagina* novaPagina, cha
     }
     atual->filhos[meio] = temp.filhos[meio];
     atual->tam = meio;
-    for(i = meio + 1; i < temp.tam; i++)
-    {
-        novaPagina->chaves[i] = temp.chaves[i];
-        novaPagina->filhos[i] = temp.filhos[i];
-    }
-    novaPagina->filhos[temp.tam] = temp.filhos[temp.tam];
+	i = meio + 1;
+	j = 0;
+	while(i < temp.tam)
+	{
+		novaPagina->chaves[j] = temp.chaves[i];
+        novaPagina->filhos[j] = temp.filhos[i];
+		i++;
+		j++;
+	}
+	novaPagina->filhos[j] = temp.filhos[i];
     novaPagina->tam = temp.tam - meio - 1;
-
     return TRUE;
 }
 

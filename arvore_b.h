@@ -40,9 +40,11 @@ paginaAux;  // Página auxiliar utilizada na função split
 
 //int inicializa();
 int busca(tRegistro* registro, int id);
-long buscaAux(int id, FILE* indice, pagina atual);
+int buscaAux(pagina atual, chave* buscaChave, FILE* indice);
+int carregaPagina(pagina* atual, int RRN, FILE* indice);
+void escrevePagina(pagina atual, int RRN, FILE* indice);
 char *parser(char *buffer, int *pos);
-int buscaBinaria(chave chaves[], chave novaChave, int esq, int dir);
+int buscaBinaria(chave chaves[], chave* novaChave, int esq, int dir);
 int inserir(int id, char titulo[], char genero[]);
 int inserirArv(int RRN_atual, chave novaChave, chave* promo, int* RRN_filho, FILE* indice);
 int split(chave novaChave, int RRN_filho, pagina* atual, pagina* novaPagina, chave* promo, int* RRN_filho_promo);

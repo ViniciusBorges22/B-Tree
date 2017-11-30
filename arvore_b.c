@@ -17,9 +17,9 @@ int busca(tRegistro* registro, int id)
                                                                     //sizeof(int) é somado para considerar o contador no cabeçalho do arquivo
     pagina atual;                               //página auxiliar para buscar na árvore
     fread(&atual, sizeof(pagina), 1, indice);   //Atribui a raiz à página "atual"
-
-    long byteoffset = buscaAux(id, indice, atual);  //função auxiliar, permite passar a página atual como argumento para a recursão
-    if(byteoffset == NAOENCONTRADO)
+    chave buscaChave;
+    buscaChave.id = id;
+    if(buscaAux(atual, &buscaChave, indice) == NAOENCONTRADO)
         return NAOENCONTRADO;               //retorna o código de "chave não encontrada"
     fclose(indice);
 
@@ -29,7 +29,7 @@ int busca(tRegistro* registro, int id)
         fprintf(stderr, "Erro na abertura do arquivo de dados\n");
         return ERRO;              //código de erro
     }
-    fseek(dados, byteoffset, SEEK_SET);         //posiciona o ponteiro do arquivo de dados no registro desejado
+    fseek(dados, buscaChave.byteoffset, SEEK_SET);  //posiciona o ponteiro do arquivo de dados no registro desejado
     char size;                                  //tamanho do registro
     fread(&size, sizeof(char), 1, dados);       //lê o tamanho do registro do arquivo
     char buffer[1000];
@@ -42,36 +42,30 @@ int busca(tRegistro* registro, int id)
     return ENCONTRADO;                          //código de "chave encontrada"
 }
 
-long buscaAux(int id, FILE* indice, pagina atual)
+int buscaAux(pagina atual, chave* buscaChave, FILE* indice)
 {
-    int i;
-    for(i = 0; i < atual.tam; i++)              //percorre todas as chaves da página
+    int pos;
+    while((pos = buscaBinaria(atual.chaves, buscaChave, 0, atual.tam-1)) != ENCONTRADO)
     {
-        if(id < atual.chaves[i].id)             //caso o id procurado seja menor que o id da chave atual, procura no filho à esquerda da chave atual
-        {
-            int rrn = atual.filhos[i];
-            if(rrn == -1)                       //caso atual seja uma página folha, retorna o código de "chave não encontrada"
-                return NAOENCONTRADO;
-            fseek(indice, rrn*sizeof(pagina) + 2*sizeof(int), SEEK_SET);  //posiciona o ponteiro do arquivo no registro do filho correspondente
-                                                                        //"sizeof(int)" é somado ao offset para considerar o cabeçalho do índice
-            fread(&atual, sizeof(pagina), 1, indice);   //a página filha é armazenado na página atual
-            return buscaAux(id, indice, atual);         //chama recursivamente a função
-        }
-        else if(id > atual.chaves[i].id)
-        {
-            if(i == atual.tam - 1 || id < atual.chaves[i+1].id)           //caso o id procurado esteja entre duas chaves consecutivas, procura no filho à direita da chave atual
-            {
-                fseek(indice, (atual.filhos[i+1])*sizeof(pagina) + 2*sizeof(int), SEEK_SET);    //posiciona o ponteiro do arquivo no registro do filho correspondente
-                fread(&atual, sizeof(pagina), 1, indice);   //a página filha é armazenada na página atual
-                return buscaAux(id, indice, atual);         //chama recursivamente a função
-            }
-            else                                //caso o id procurado seja maior que o id das duas chaves consecutivas, continua o loop
-                continue;
-        }
-        else                                    //caso o id procurado seja igual ao id da chave atual, retorna o byteoffset dessa chave
-            return atual.chaves[i].byteoffset;
+        if(carregaPagina(&atual, atual.filhos[pos], indice) == NAOENCONTRADO)
+            return NAOENCONTRADO;
     }
-    return NAOENCONTRADO;
+    return pos;
+}
+
+int carregaPagina(pagina* atual, int RRN, FILE* indice)
+{
+    if(RRN == -1)
+        return NAOENCONTRADO;
+    fseek(indice, RRN*sizeof(pagina) + 2*sizeof(int), SEEK_SET);
+    fread(atual, sizeof(pagina), 1, indice);
+    return ENCONTRADO;
+}
+
+void escrevePagina(pagina atual, int RRN, FILE* indice)
+{
+    fseek(indice, RRN*sizeof(pagina) + 2*sizeof(int), SEEK_SET);
+    fwrite(&atual, sizeof(pagina), 1, indice);
 }
 
 char *parser(char *buffer, int *pos)
@@ -85,28 +79,34 @@ char *parser(char *buffer, int *pos)
     return &buffer[posi];
 }
 
-int buscaBinaria(chave chaves[], chave novaChave, int esq, int dir)
+int buscaBinaria(chave chaves[], chave* novaChave, int esq, int dir)
 {
     if(esq == dir)
     {
-        if(novaChave.id < chaves[esq].id)
+        if(novaChave->id < chaves[esq].id)
             return esq;
-        else if(novaChave.id > chaves[esq].id)
+        else if(novaChave->id > chaves[esq].id)
             return esq+1;
         else
-            return ENCONTRADO;
+        {
+            novaChave->byteoffset = chaves[esq].byteoffset;
+            return ENCONTRADO;      //Chave já está na arvore
+        }
     }
 
     int mid = (esq + dir)/2;
 
-    if(novaChave.id < chaves[mid].id)
+    if(novaChave->id < chaves[mid].id)
    		return buscaBinaria(chaves, novaChave, esq, mid);
 
-    else if(novaChave.id > chaves[mid].id)
+    else if(novaChave->id > chaves[mid].id)
     	return buscaBinaria(chaves, novaChave, mid+1, dir);
 
     else
-   		return ENCONTRADO;         //Chave já está na arvore
+    {
+        novaChave->byteoffset = chaves[mid].byteoffset;
+        return ENCONTRADO;      //Chave já está na arvore
+    }
 }
 
 
@@ -186,10 +186,9 @@ int inserirArv(int RRN_atual, chave novaChave, chave* promo, int* RRN_filho, FIL
     }
     else
     {
-        fseek(indice, RRN_atual*sizeof(pagina) + 2*sizeof(int), SEEK_SET);
         pagina atual;
-        fread(&atual, sizeof(pagina), 1, indice);
-        int pos = buscaBinaria(atual.chaves, novaChave, 0, atual.tam-1);
+        carregaPagina(&atual, RRN_atual, indice);
+        int pos = buscaBinaria(atual.chaves, &novaChave, 0, atual.tam-1);
         if(pos == ENCONTRADO)     //se a chave já se encontra na árvore
             return ENCONTRADO;    //retorna código de "chave já existente"
         chave promoAux;
@@ -200,8 +199,7 @@ int inserirArv(int RRN_atual, chave novaChave, chave* promo, int* RRN_filho, FIL
         else if(atual.tam < ORDEM-1)    //se há espaço na página atual
         {
             atualizaPagina(atual.chaves, atual.filhos, &atual.tam, promoAux, RRN_filhoAux);
-            fseek(indice, RRN_atual*sizeof(pagina) + 2*sizeof(int), SEEK_SET);
-            fwrite(&atual, sizeof(pagina), 1, indice);
+            escrevePagina(atual, RRN_atual, indice);
             return NAOPROMOCAO;
         }
         else
@@ -210,10 +208,8 @@ int inserirArv(int RRN_atual, chave novaChave, chave* promo, int* RRN_filho, FIL
             if(split(promoAux, RRN_filhoAux, &atual, &novaPagina, promo, RRN_filho) == ERRO){
               return ERRO;
             }
-            fseek(indice, RRN_atual*sizeof(pagina) + 2*sizeof(int), SEEK_SET);
-            fwrite(&atual, sizeof(pagina), 1, indice);
-            fseek(indice, *RRN_filho*sizeof(pagina) + 2*sizeof(int), SEEK_SET);
-            fwrite(&novaPagina, sizeof(pagina), 1, indice);
+            escrevePagina(atual, RRN_atual, indice);
+            escrevePagina(novaPagina, *RRN_filho, indice);
             return PROMOCAO;
         }
     }
@@ -282,7 +278,7 @@ int split(chave novaChave, int RRN_filho, pagina* atual, pagina* novaPagina, cha
 
 void atualizaPagina(chave chaves[], int filhos[], unsigned short* tam, chave novaChave, int RRN_filho)
 {
-    int pos = buscaBinaria(chaves, novaChave, 0, *tam-1);
+    int pos = buscaBinaria(chaves, &novaChave, 0, *tam-1);
     shiftDireita(chaves, filhos, pos, *tam);
     chaves[pos] = novaChave;
     filhos[pos+1] = RRN_filho;

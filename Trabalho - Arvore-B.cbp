@@ -35,6 +35,9 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="arvore_b.h" />
+		<Unit filename="dados.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="dados.h" />
 		<Unit filename="main.c">
 			<Option compilerVar="CC" />

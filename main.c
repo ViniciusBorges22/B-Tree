@@ -9,7 +9,8 @@ int main()
 {
     int menu = true;
     int id, opt;
-    char buffer[30];
+    char buffer[30], mensagem[50];
+    long byteoffset;
     tRegistro registro;
 
     while(menu){
@@ -28,34 +29,53 @@ int main()
         switch(opt){
             case 1:
                 printf("Qual o titulo da musica a ser inserida?\n");
-                char nome[30];
-                fgets(nome, 30, stdin);
+                char titulo[30];
+                fgets(titulo, 30, stdin);
                 printf("Qual o genero da musica a ser inserida?\n");
                 char genero[20];
                 fgets(genero, 20, stdin);
                 printf("Qual o id da musica a ser inserida?\n");
-
                 fgets(buffer, 30, stdin);
                 sscanf(buffer, "%d", &id);
-                int retornoInsere = inserir(id, nome, genero);
+
+                sscanf(mensagem, "Execucao de operacao de INSERCAO de <%d>, <%s>, <%s>.\n", id, titulo, genero);
+                gravarLog(mensagem);
+
+                int retornoInsere = inserir(id, titulo, genero);
                 system("clear");
                 if(retornoInsere == ERRO)
                     fprintf(stderr, "\nErro na insercao do arquivo.");
                 else if(retornoInsere == ENCONTRADO)
-                    fprintf(stderr, "\nErro na insercao do arquivo: musica ja inserida.");
+                {
+                    sscanf(mensagem, "Chave <%d> duplicada\n", id);
+                    gravarLog(mensagem);
+                }
                 else
-                    printf("\nInsercao feita com sucesso.");
+                {
+                    sscanf(mensagem, "Chave <%d> inserida com sucesso\n", id);
+                    gravarLog(mensagem);
+                }
                 getchar();
                 break;
             case 2:
                 printf("Qual o id da musica a ser buscada?\n");
                 fgets(buffer, 30, stdin);
         		sscanf(buffer, "%d", &id);
+
+                sscanf(mensagem, "Execucao de operacao de PESQUISA de <%d>\n", id);
+                gravarLog(mensagem);
+
                 system("clear");
-                if(busca(&registro, id) == ENCONTRADO)
-                    printf("Titulo: %s\nGenero: %s\nID:[%d]\n", registro.titulo, registro.genero,registro.id);
+                if(busca(&registro, id, &byteoffset) == ENCONTRADO)
+                {
+                    sscanf(mensagem, "Chave <%d> encontrada, offset <%li>, Titulo: <%s>, Genero: <%s>\n", id, byteoffset, registro.titulo, registro.genero);
+                    gravarLog(mensagem);
+                }
                 else
-                    printf("\nMusica nao encontrada.");
+                {
+                    sscanf(mensagem, "Chave <%d> nao encontrada\n", id);
+                    gravarLog(mensagem);
+                }
                 getchar();
                 break;
 

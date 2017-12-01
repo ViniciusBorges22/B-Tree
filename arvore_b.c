@@ -68,6 +68,19 @@ void escrevePagina(pagina atual, int RRN, FILE* indice)
     fwrite(&atual, sizeof(pagina), 1, indice);
 }
 
+int gravarLog(char mensagem[])
+{
+    FILE* log;
+    if((log = fopen("logVBorges.txt", "ab")) == NULL)
+    {
+        fprintf(stderr, "Erro na abertura do arquivo de dados\n");
+        return ERRO;              //código de erro
+    }
+    fprintf(log, mensagem);
+    fclose(log);
+    return TRUE;
+}
+
 char *parser(char *buffer, int *pos)
 {
     int posi = *pos;
@@ -109,6 +122,30 @@ int buscaBinaria(chave chaves[], chave* novaChave, int esq, int dir)
     }
 }
 
+/*  Função usada para construir um arquivo de indices "Arvore", a partir de um arquivo de dados posteriormente inserido.
+*   Ela funciona da seguinte forma:
+*       Um laço percorre todo o arquivo de dados, armezenando os registros nele presente e os byteoffset de cada um deles
+*          em cada ciclo desse laço o registro tenta ser inserido na arvore, o qual só será inserido se ainda n estiver
+*          presente nela. A condiçao de parada do laço é o fim do arquivo de dados.
+*       Em seguida é salvo no log que a ação foi concluida e o arquivo de dados é fechado.
+*/
+int checagem()
+{
+    tRegistro registro;       // Registro auxiliar para salvar as informações do arquivo de dados.
+    FILE* dados;
+    if((dados = fopen("dados.dad", "rb")) == NULL){     // tentativa de abrir o arquivo
+        fprintf(stderr, "Erro na leitura do arquivo de dados\n");
+        return ERRO;              //código de erro
+    }
+    long byteoffset = ftell(dados);         // Primeiro byteoffset do primeiro registro, necessita ser carregado aqui pois ao ler com a funçao proxRegistro andaremos com o ponteiro do arquivo e perderiamos o byteoffset desse primeiro registro
+    while(proxRegistro(dados, &registro) != ERRO){  // funçao que le do arquivo de dados e salva a informação lida no ponteiro passado como argumento
+        inserirAux(registro.id, registro.titulo, registro.genero, byteoffset);  //Funçao para inserir o registro na arvore
+        byteoffset = ftell(dados);              //atualização do byteoffset do proximo registro do arqvuio, para uma posterior inserção
+    }
+    fclose(dados);      //fechamento do arquivo de dados
+    gravarLog("Execucao da criacao do arquivo de indice arvore.idx com base no arquivo de dados dados.dad.\n\n");  //Escrita no Log
+    return TRUE;
+}
 
 int inserir(int id, char titulo[], char genero[])
 {
@@ -120,6 +157,15 @@ int inserir(int id, char titulo[], char genero[])
     }
     fseek(dados, 0, SEEK_END);
     long byteoffsetReg = ftell(dados);
+    int retorno;
+    if((retorno = inserirAux(id, titulo, genero, byteoffsetReg)) != ENCONTRADO)
+        inserirArq(id, titulo, genero, dados);
+    fclose(dados);
+    return retorno;
+}
+
+int inserirAux(int id, char titulo[], char genero[], long byteoffsetReg)
+{
     chave novaChave;
     novaChave.id = id;
     novaChave.byteoffset = byteoffsetReg;
@@ -160,9 +206,6 @@ int inserir(int id, char titulo[], char genero[])
         fseek(indice, raiz*sizeof(pagina), SEEK_CUR);
         fwrite(&novaRaiz, sizeof(pagina), 1, indice);
     }
-    if(valorRetorno != ENCONTRADO)
-        inserirArq(id, titulo, genero, dados);
-    fclose(dados);
     fclose(indice);
     return valorRetorno;
 }
@@ -208,6 +251,11 @@ int inserirArv(int RRN_atual, chave novaChave, chave* promo, int* RRN_filho, FIL
             if(split(promoAux, RRN_filhoAux, &atual, &novaPagina, promo, RRN_filho) == ERRO){
               return ERRO;
             }
+            char mensagem[50];
+            sscanf(mensagem, "Divisao de no - pagina %d\n", RRN_atual);
+            gravarLog(mensagem);
+            sscanf(mensagem, "Chave <%d> promovida\n", promo->id);
+            gravarLog(mensagem);
             escrevePagina(atual, RRN_atual, indice);
             escrevePagina(novaPagina, *RRN_filho, indice);
             return PROMOCAO;

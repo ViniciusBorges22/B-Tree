@@ -17,6 +17,22 @@ void inserirArq(int id, char titulo[], char genero[], FILE* dados)
     fwrite(&buffer, tam, 1, dados);
 }
 
+int proxRegistro(FILE* dados, tRegistro *registro)
+{
+    if(feof(dados)){
+        return ERRO;
+    }
+    char size;                                  //tamanho do registro
+    fread(&size, sizeof(char), 1, dados);       //lê o tamanho do registro do arquivo
+    char buffer[1000];
+    fread(&buffer, size, 1, dados);             //lê o registro e armazena no buffer
+    int pos = 0;
+    sscanf(parser(buffer, &pos), "%d", &(registro->id));
+    strcpy(registro->titulo, parser(buffer, &pos));
+    strcpy(registro->genero, parser(buffer, &pos));
+    return ENCONTRADO;
+}
+
 
 /*
     As funções abaixo talvez sejam úteis

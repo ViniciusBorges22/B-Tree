@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "arvore_b.h"
+#include "tad_fila.h"
 
 int busca(tRegistro* registro, int id, long* byteoffset)
 {
@@ -12,11 +13,9 @@ int busca(tRegistro* registro, int id, long* byteoffset)
         return ERRO;              //código de erro
     }
     int raiz;
-    fread(&raiz, sizeof(int), 1, indice);       //lê do índice o RRN da raiz da árvore
-    fseek(indice, raiz*sizeof(pagina) + sizeof(int), SEEK_CUR);     //posiciona o ponteiro do índice no registro da raiz
-                                                                    //sizeof(int) é somado para considerar o contador no cabeçalho do arquivo
+    carregaRaiz(&raiz, indice);
     pagina atual;                               //página auxiliar para buscar na árvore
-    fread(&atual, sizeof(pagina), 1, indice);   //Atribui a raiz à página "atual"
+    carregaPagina(&atual, raiz, indice);
     chave buscaChave;
     buscaChave.id = id;
     if(buscaAux(atual, &buscaChave, indice) == NAOENCONTRADO)
@@ -56,10 +55,19 @@ int buscaAux(pagina atual, chave* buscaChave, FILE* indice)
 
 int carregaPagina(pagina* atual, int RRN, FILE* indice)
 {
-    if(RRN == -1)
+    if(RRN < 0)
         return NAOENCONTRADO;
     fseek(indice, RRN*sizeof(pagina) + 2*sizeof(int), SEEK_SET);
     fread(atual, sizeof(pagina), 1, indice);
+    return ENCONTRADO;
+}
+
+int carregaRaiz(int* raiz, FILE* indice)
+{
+    if(*raiz < 0)
+        return NAOENCONTRADO;
+    rewind(indice);
+    fread(raiz, sizeof(int), 1, indice);
     return ENCONTRADO;
 }
 
@@ -342,4 +350,61 @@ void shiftDireita(chave chaves[], int filhos[], int inicial, int tam)
         chaves[i] = chaves[i-1];
         filhos[i+1] = filhos[i];
     }
+}
+
+int printaArvore()
+{
+    char mensagem[50];
+    sprintf(mensagem, "Execucao de operacao para mostrar a arvore-B gerada:\n");
+    gravarLog(mensagem);
+
+    Fila f;
+    CriaFila(&f);
+    FILE* indice;
+    if((indice = fopen("arvore.idx", "rb")) == NULL)
+    {
+        fprintf(stderr, "Erro na abertura do arquivo de dados\n");
+        return ERRO;              //código de erro
+    }
+    int raiz;
+    carregaRaiz(&raiz, indice);
+    pagina atual;
+    carregaPagina(&atual, raiz, indice);
+    int erro;
+    EntraFila(&f, atual, &erro);
+    while(!EstaVaziaFila(f) && !erro)
+    {
+        SairFila(&f, &atual, &erro);
+
+        printaPagina(atual);
+        int i;
+        pagina aux;
+        for(i = 0; i <= atual.tam && !erro; i++)
+        {
+            carregaPagina(&aux, atual.filhos[i], indice);
+            EntraFila(&f, aux, &erro);
+        }
+    }
+    fclose(indice);
+    if(erro)
+        return ERRO;
+    else
+        return TRUE;
+}
+
+void printaPagina(pagina atual)
+{
+    char tam[10];
+    sprintf(tam, "%d ", atual.tam);
+    char mensagem[200];
+    strcat(mensagem, tam);
+    int i;
+    char chave[50];
+    for(i = 0; i < atual.tam; i++)
+    {
+        sprintf(chave, "<%d/%li> ", atual.chaves[i].id, atual.chaves[i].byteoffset);
+        strcat(mensagem, chave);
+    }
+    strcat(mensagem, "\n");
+    gravarLog(mensagem);
 }

@@ -13,5 +13,6 @@ obj/
 
 arvore.idx
 dados.dad
+*.txt
 
 teste*

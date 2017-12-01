@@ -3,7 +3,7 @@
 #include <string.h>
 #include "arvore_b.h"
 
-int busca(tRegistro* registro, int id)
+int busca(tRegistro* registro, int id, long* byteoffset)
 {
     FILE* indice;
     if((indice = fopen("arvore.idx", "rb")) == NULL)
@@ -22,6 +22,7 @@ int busca(tRegistro* registro, int id)
     if(buscaAux(atual, &buscaChave, indice) == NAOENCONTRADO)
         return NAOENCONTRADO;               //retorna o código de "chave não encontrada"
     fclose(indice);
+    *byteoffset = buscaChave.byteoffset;
 
     FILE* dados;
     if((dados = fopen("dados.dad", "rb")) == NULL)
@@ -252,9 +253,9 @@ int inserirArv(int RRN_atual, chave novaChave, chave* promo, int* RRN_filho, FIL
               return ERRO;
             }
             char mensagem[50];
-            sscanf(mensagem, "Divisao de no - pagina %d\n", RRN_atual);
+            sprintf(mensagem, "Divisao de no - pagina %d\n", RRN_atual);
             gravarLog(mensagem);
-            sscanf(mensagem, "Chave <%d> promovida\n", promo->id);
+            sprintf(mensagem, "Chave <%d> promovida\n", promo->id);
             gravarLog(mensagem);
             escrevePagina(atual, RRN_atual, indice);
             escrevePagina(novaPagina, *RRN_filho, indice);

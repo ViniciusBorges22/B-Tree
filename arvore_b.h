@@ -45,16 +45,15 @@ int carregaPagina(pagina* atual, int RRN, FILE* indice);
 int carregaRaiz(int* raiz, FILE* indice);
 void escrevePagina(pagina atual, int RRN, FILE* indice);
 int gravarLog(char mensagem[]);
-char *parser(char *buffer, int *pos);
 int buscaBinaria(chave chaves[], chave* novaChave, int esq, int dir);
 int checagem();
 int inserir(int id, char titulo[], char genero[]);
-int inserirAux(int id, char titulo[], char genero[], long byteoffsetReg);
+int inserirAux(int id, long byteoffsetReg);
 int inserirArv(int RRN_atual, chave novaChave, chave* promo, int* RRN_filho, FILE* indice);
 int split(chave novaChave, int RRN_filho, pagina* atual, pagina* novaPagina, chave* promo, int* RRN_filho_promo);
 void atualizaPagina(chave chaves[], int filhos[], unsigned short* tam, chave novaChave, int RRN_filho);
 void shiftDireita(chave chaves[], int filhos[], int inicial, int tam);
-int printaArvore();
-void printaPagina(pagina atual);
+int imprimeArvore();
+void imprimePagina(pagina atual, int nivel);
 
 #endif // ARVORE_B_H_INCLUDED

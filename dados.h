@@ -16,5 +16,6 @@ tRegistro;
 char montarBuffer(int id, char titulo[], char genero[], char buffer[]);
 void inserirArq(int id, char titulo[], char genero[], FILE* dados);
 int proxRegistro(FILE* dados, tRegistro *registro);
+char *parser(char *buffer, int *pos);
 
 #endif // DADOS_H_INCLUDED

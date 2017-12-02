@@ -90,17 +90,6 @@ int gravarLog(char mensagem[])
     return TRUE;
 }
 
-char *parser(char *buffer, int *pos)
-{
-    int posi = *pos;
-
-    while(buffer[*pos]!='|')
-        (*pos)++;
-    buffer[*pos] = '\0';
-    (*pos)++;
-    return &buffer[posi];
-}
-
 int buscaBinaria(chave chaves[], chave* novaChave, int esq, int dir)
 {
     if(esq == dir)
@@ -146,10 +135,10 @@ int checagem()
         fprintf(stderr, "Erro na leitura do arquivo de dados\n");
         return ERRO;              //código de erro
     }
-    long byteoffset = ftell(dados);         // Primeiro byteoffset do primeiro registro, necessita ser carregado aqui pois ao ler com a funçao proxRegistro andaremos com o ponteiro do arquivo e perderiamos o byteoffset desse primeiro registro
+    long byteoffset = 0;                            // Primeiro byteoffset do primeiro registro
     while(proxRegistro(dados, &registro) != ERRO){  // funçao que le do arquivo de dados e salva a informação lida no ponteiro passado como argumento
-        inserirAux(registro.id, registro.titulo, registro.genero, byteoffset);  //Funçao para inserir o registro na arvore
-        byteoffset = ftell(dados);              //atualização do byteoffset do proximo registro do arqvuio, para uma posterior inserção
+        inserirAux(registro.id, byteoffset);        //Funçao para inserir o registro na arvore
+        byteoffset = ftell(dados);                  //atualização do byteoffset do proximo registro do arquivo, para uma posterior inserção
     }
     fclose(dados);      //fechamento do arquivo de dados
     gravarLog("Execucao da criacao do arquivo de indice arvore.idx com base no arquivo de dados dados.dad.\n\n");  //Escrita no Log
@@ -167,13 +156,13 @@ int inserir(int id, char titulo[], char genero[])
     fseek(dados, 0, SEEK_END);
     long byteoffsetReg = ftell(dados);
     int retorno;
-    if((retorno = inserirAux(id, titulo, genero, byteoffsetReg)) != ENCONTRADO)
+    if((retorno = inserirAux(id, byteoffsetReg)) != ENCONTRADO)
         inserirArq(id, titulo, genero, dados);
     fclose(dados);
     return retorno;
 }
 
-int inserirAux(int id, char titulo[], char genero[], long byteoffsetReg)
+int inserirAux(int id, long byteoffsetReg)
 {
     chave novaChave;
     novaChave.id = id;
@@ -352,7 +341,7 @@ void shiftDireita(chave chaves[], int filhos[], int inicial, int tam)
     }
 }
 
-int printaArvore()
+int imprimeArvore()
 {
     char mensagem[50];
     sprintf(mensagem, "Execucao de operacao para mostrar a arvore-B gerada:\n");
@@ -370,19 +359,30 @@ int printaArvore()
     carregaRaiz(&raiz, indice);
     pagina atual;
     carregaPagina(&atual, raiz, indice);
-    int erro;
+    int erro = 0;
     EntraFila(&f, atual, &erro);
+    int nivel = 0;
+    int cont = 1;
+    int somaCont = 0;
     while(!EstaVaziaFila(f) && !erro)
     {
+        if(cont == 0)
+        {
+            nivel++;
+            cont = somaCont;
+            somaCont = 0;
+        }
         SairFila(&f, &atual, &erro);
-
-        printaPagina(atual);
+        imprimePagina(atual, nivel);
+        cont--;
         int i;
         pagina aux;
         for(i = 0; i <= atual.tam && !erro; i++)
         {
-            carregaPagina(&aux, atual.filhos[i], indice);
+            if(carregaPagina(&aux, atual.filhos[i], indice) == NAOENCONTRADO)
+                break;
             EntraFila(&f, aux, &erro);
+            somaCont += aux.tam + 1;
         }
     }
     fclose(indice);
@@ -392,11 +392,12 @@ int printaArvore()
         return TRUE;
 }
 
-void printaPagina(pagina atual)
+void imprimePagina(pagina atual, int nivel)
 {
     char tam[10];
-    sprintf(tam, "%d ", atual.tam);
+    sprintf(tam, "%d %hu ", nivel, atual.tam);
     char mensagem[200];
+    mensagem[0] = '\0';
     strcat(mensagem, tam);
     int i;
     char chave[50];

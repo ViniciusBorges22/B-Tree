@@ -19,7 +19,7 @@ int main()
         printf("\n MENU\n");
         printf("\n 1 - Adicionar dado");
         printf("\n 2 - Buscar dado");
-        printf("\n 3 - Remover dado");
+        printf("\n 3 - Imprimir a arvore");
         printf("\n 0 - Sair\n");
         printf("\n Opcao: ");
 
@@ -80,7 +80,7 @@ int main()
                 break;
 
             case 3:
-                //remover
+                imprimeArvore();
                 break;
             case 0:
                 menu = false;

@@ -9,13 +9,13 @@ int main()
 {
     int menu = TRUE;
     int id, opt;
-    char buffer[50], mensagem[50];
+    char buffer[50];
     long byteoffset;
     tRegistro registro;
 
     while(menu){
 
-        system("cls");
+        system("clear");
         printf("\n MENU\n");
         printf("\n 1 - Criar arvore a partir do arquivo de dados.");
         printf("\n 2 - Inserir novas musicas.");
@@ -57,26 +57,19 @@ int main()
                 break;
 
             case 3:
-                printf("Qual o id da musica a ser inserida?\n");
+                printf("Qual o id da musica a ser buscada?\n");
 
                 limitante1 = '0';            //Codigo ASCII do numero 0.
                 limitante2 = '9';            //Codigo ASCII do numero 9
                 tratamentoEntrada(auxid, buffer, limitante1, limitante2);
                 id = atoi(auxid);       //Converte o auxid de string para int.
 
-                sprintf(mensagem, "Execucao de operacao de PESQUISA de <%d>\n", id);
-                gravarLog(mensagem);
+                gravarLog("Execucao de operacao de PESQUISA de <%d>\n", id);
 
                 if(busca(&registro, id, &byteoffset) == ENCONTRADO)
-                {
-                    sprintf(mensagem, "Chave <%d> encontrada, offset <%li>, Titulo: <%s>, Genero: <%s>\n", id, byteoffset, registro.titulo, registro.genero);
-                    gravarLog(mensagem);
-                }
+                    gravarLog("Chave <%d> encontrada, offset <%li>, Titulo: <%s>, Genero: <%s>\n", id, byteoffset, registro.titulo, registro.genero);
                 else
-                {
-                    sprintf(mensagem, "Chave <%d> nao encontrada\n", id);
-                    gravarLog(mensagem);
-                }
+                    gravarLog("Chave <%d> nao encontrada\n", id);
                 break;
 
             case 4:

@@ -44,7 +44,7 @@ int buscaAux(pagina atual, chave* buscaChave, FILE* indice);
 int carregaPagina(pagina* atual, int RRN, FILE* indice);
 int carregaRaiz(int* raiz, FILE* indice);
 void escrevePagina(pagina atual, int RRN, FILE* indice);
-int gravarLog(char mensagem[]);
+int gravarLog(const char* format, ...);
 int buscaBinaria(chave chaves[], chave* novaChave, int esq, int dir);
 int checagem();
 int inserir(int id, char titulo[], char genero[]);

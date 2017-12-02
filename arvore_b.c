@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include "arvore_b.h"
 #include "tad_fila.h"
 
@@ -77,7 +78,7 @@ void escrevePagina(pagina atual, int RRN, FILE* indice)
     fwrite(&atual, sizeof(pagina), 1, indice);
 }
 
-int gravarLog(char mensagem[])
+int gravarLog(const char* format, ...)
 {
     FILE* log;
     if((log = fopen("logVBorges.txt", "ab")) == NULL)
@@ -85,7 +86,10 @@ int gravarLog(char mensagem[])
         fprintf(stderr, "Erro na abertura do arquivo de log\n");
         return ERRO;              //código de erro
     }
-    fprintf(log, mensagem);
+    va_list args;
+    va_start(args, format);
+    vfprintf(log, format, args);
+    va_end(args);
     fclose(log);
     return TRUE;
 }
@@ -147,9 +151,7 @@ int checagem()
 
 int inserir(int id, char titulo[], char genero[])
 {
-    char mensagem[50];
-    sprintf(mensagem, "Execucao de operacao de INSERCAO de <%d>, <%s>, <%s>.\n", id, titulo, genero);
-    gravarLog(mensagem);
+    gravarLog("Execucao de operacao de INSERCAO de <%d>, <%s>, <%s>.\n", id, titulo, genero);
     FILE* dados;
     if((dados = fopen("dados.dad", "a+b")) == NULL)
     {
@@ -208,17 +210,9 @@ int inserirAux(int id, long byteoffsetReg)
         fwrite(&novaRaiz, sizeof(pagina), 1, indice);
     }
     else if(valorRetorno == ENCONTRADO)
-    {
-        char mensagem[50];
-        sprintf(mensagem, "Chave <%d> duplicada.\n", id);
-        gravarLog(mensagem);
-    }
+        gravarLog("Chave <%d> duplicada.\n", id);
     else
-    {
-        char mensagem[50];
-        sprintf(mensagem, "Chave <%d> inserida com sucesso.\n", id);
-        gravarLog(mensagem);
-    }
+        gravarLog("Chave <%d> inserida com sucesso.\n", id);
     fclose(indice);
     return valorRetorno;
 }
@@ -264,11 +258,8 @@ int inserirArv(int RRN_atual, chave novaChave, chave* promo, int* RRN_filho, FIL
             if(split(promoAux, RRN_filhoAux, &atual, &novaPagina, promo, RRN_filho) == ERRO){
               return ERRO;
             }
-            char mensagem[50];
-            sprintf(mensagem, "Divisao de no - pagina %d\n", RRN_atual);
-            gravarLog(mensagem);
-            sprintf(mensagem, "Chave <%d> promovida\n", promo->id);
-            gravarLog(mensagem);
+            gravarLog("Divisao de no - pagina %d\n", RRN_atual);
+            gravarLog("Chave <%d> promovida\n", promo->id);
             escrevePagina(atual, RRN_atual, indice);
             escrevePagina(novaPagina, *RRN_filho, indice);
             return PROMOCAO;
@@ -358,9 +349,7 @@ void shiftDireita(chave chaves[], int filhos[], int inicial, int tam)
 
 int imprimeArvore()
 {
-    char mensagem[50];
-    sprintf(mensagem, "Execucao de operacao para mostrar a arvore-B gerada:\n");
-    gravarLog(mensagem);
+    gravarLog("Execucao de operacao para mostrar a arvore-B gerada:\n");
 
     Fila f;
     CriaFila(&f);

@@ -129,6 +129,7 @@ int buscaBinaria(chave chaves[], chave* novaChave, int esq, int dir)
 */
 int checagem()
 {
+    gravarLog("Execucao da criacao do arquivo de indice arvore.idx com base no arquivo de dados dados.dad.\n");  //Escrita no Log
     tRegistro registro;       // Registro auxiliar para salvar as informações do arquivo de dados.
     FILE* dados;
     if((dados = fopen("dados.dad", "rb")) == NULL){     // tentativa de abrir o arquivo
@@ -141,12 +142,14 @@ int checagem()
         byteoffset = ftell(dados);                  //atualização do byteoffset do proximo registro do arquivo, para uma posterior inserção
     }
     fclose(dados);      //fechamento do arquivo de dados
-    gravarLog("Execucao da criacao do arquivo de indice arvore.idx com base no arquivo de dados dados.dad.\n\n");  //Escrita no Log
     return TRUE;
 }
 
 int inserir(int id, char titulo[], char genero[])
 {
+    char mensagem[50];
+    sprintf(mensagem, "Execucao de operacao de INSERCAO de <%d>, <%s>, <%s>.\n", id, titulo, genero);
+    gravarLog(mensagem);
     FILE* dados;
     if((dados = fopen("dados.dad", "a+b")) == NULL)
     {
@@ -203,6 +206,18 @@ int inserirAux(int id, long byteoffsetReg)
         fwrite(&ultimo_rrn, sizeof(int), 1, indice);
         fseek(indice, raiz*sizeof(pagina), SEEK_CUR);
         fwrite(&novaRaiz, sizeof(pagina), 1, indice);
+    }
+    else if(valorRetorno == ENCONTRADO)
+    {
+        char mensagem[50];
+        sprintf(mensagem, "Chave <%d> duplicada.\n", id);
+        gravarLog(mensagem);
+    }
+    else
+    {
+        char mensagem[50];
+        sprintf(mensagem, "Chave <%d> inserida com sucesso.\n", id);
+        gravarLog(mensagem);
     }
     fclose(indice);
     return valorRetorno;

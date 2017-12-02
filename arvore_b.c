@@ -9,7 +9,7 @@ int busca(tRegistro* registro, int id, long* byteoffset)
     FILE* indice;
     if((indice = fopen("arvore.idx", "rb")) == NULL)
     {
-        fprintf(stderr, "Erro na abertura do arquivo de dados\n");
+        fprintf(stderr, "Erro na abertura do arquivo de indices\n");
         return ERRO;              //código de erro
     }
     int raiz;
@@ -82,7 +82,7 @@ int gravarLog(char mensagem[])
     FILE* log;
     if((log = fopen("logVBorges.txt", "ab")) == NULL)
     {
-        fprintf(stderr, "Erro na abertura do arquivo de dados\n");
+        fprintf(stderr, "Erro na abertura do arquivo de log\n");
         return ERRO;              //código de erro
     }
     fprintf(log, mensagem);
@@ -289,7 +289,7 @@ int split(chave novaChave, int RRN_filho, pagina* atual, pagina* novaPagina, cha
     FILE* indice;
     if((indice = fopen("arvore.idx", "r+b")) == NULL)
     {
-        fprintf(stderr, "Erro na abertura do arquivo de indice\n");
+        fprintf(stderr, "Erro na abertura do arquivo de indices\n");
         return ERRO;              //código de erro
     }
     fseek(indice, sizeof(int), SEEK_SET);
@@ -352,7 +352,7 @@ int imprimeArvore()
     FILE* indice;
     if((indice = fopen("arvore.idx", "rb")) == NULL)
     {
-        fprintf(stderr, "Erro na abertura do arquivo de dados\n");
+        fprintf(stderr, "Erro na abertura do arquivo de indices\n");
         return ERRO;              //código de erro
     }
     int raiz;
@@ -382,8 +382,8 @@ int imprimeArvore()
             if(carregaPagina(&aux, atual.filhos[i], indice) == NAOENCONTRADO)
                 break;
             EntraFila(&f, aux, &erro);
-            somaCont += aux.tam + 1;
         }
+        somaCont += atual.tam + 1;
     }
     fclose(indice);
     if(erro)
@@ -394,11 +394,8 @@ int imprimeArvore()
 
 void imprimePagina(pagina atual, int nivel)
 {
-    char tam[10];
-    sprintf(tam, "%d %hu ", nivel, atual.tam);
     char mensagem[200];
-    mensagem[0] = '\0';
-    strcat(mensagem, tam);
+    sprintf(mensagem, "%d %hu ", nivel, atual.tam);
     int i;
     char chave[50];
     for(i = 0; i < atual.tam; i++)

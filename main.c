@@ -7,7 +7,7 @@ void tratamentoEntrada(char aux[], char buffer[], char limite1, char limite2, in
 
 int main()
 {
-    if(checagem() == ERRO)                                                              //
+    if(checagem(FALSE) == ERRO)                                                         //
     {                                                                                   // Chama a função que faz a checagem da existência do arquivo de dados
         fprintf(stderr, "\nErro na checagem inicial dos arquivos de dados e indices."); // e a atualização do arquivo de índices (caso esteja desatualizado).
         getchar();                                                                      // Imprime uma mensagem caso ocorra algum erro durante o processo.
@@ -86,7 +86,7 @@ int main()
                 break;
 
             case 1:
-                if(atualizaArvore() == ERRO)
+                if(checagem(TRUE) == ERRO)
                 {
                     fprintf(stderr, "\nErro na criacao da arvore. Pressione qualquer tecla para continuar...");
                     getchar();
@@ -124,7 +124,6 @@ void tratamentoEntrada(char aux[], char buffer[], char limite1, char limite2, in
         erro = FALSE;
         cont = 0;
         fgets(buffer, 50, stdin);
-        //sscanf(buffer, "s", aux);
         int tam = strlen(buffer) - 1;
         if (buffer[tam] == '\n')
             buffer[tam] = '\0';

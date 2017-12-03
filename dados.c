@@ -5,7 +5,7 @@
 #include "arvore_b.h"
 
 //Função que executa uma checagem geral dos arquivos de dados e de indice.
-int checagem()
+int checagem(int f1)
 {
     FILE* dados;                                                      //
     if((dados = fopen("dados.dad", "r+b")) == NULL)                   //
@@ -23,7 +23,7 @@ int checagem()
     {                                                                 //
         if(verificaIndice() == ERRO)                                  // Verifica se o arquivo de indice existe.
             return ERRO;                                              //
-        if(!estaAtualizado(dados))                                    // Em seguida, verifica no cabeçalho se a Árvore-B está atualizada.
+        if(!estaAtualizado(dados) || f1)                              // Em seguida, verifica no cabeçalho se a Árvore-B está atualizada.
         {                                                             // Caso não esteja, chama a função que atualiza a Árvore.
             if(atualizaArvore() == ERRO)                              // Caso não ocorra nenhum erro, retorna TRUE.
                 return ERRO;    //código de erro                      //

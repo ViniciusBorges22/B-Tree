@@ -13,7 +13,7 @@ typedef struct
 }
 tRegistro;
 
-int checagem();
+int checagem(int f1);
 void inserirArq(int id, char titulo[], char genero[], FILE* dados);
 void escreveCabecalhoDados(char flag, FILE* dados);
 int estaAtualizado(FILE* dados);

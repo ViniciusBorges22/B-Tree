@@ -157,17 +157,19 @@ int verificaIndice()
 int atualizaArvore()
 {
     gravarLog("Execucao da criacao do arquivo de indice arvore.idx com base no arquivo de dados dados.dad.\n");  //Escrita no Log
-    tRegistro registro;       // Registro auxiliar para salvar as informações do arquivo de dados.
     FILE* dados;
-    if((dados = fopen("dados.dad", "rb")) == NULL){     // tentativa de abrir o arquivo
+    if((dados = fopen("dados.dad", "rb")) == NULL){     //Tentativa de abrir o arquivo
         fprintf(stderr, "Erro na leitura do arquivo de dados\n");
         return ERRO;              //código de erro
     }
-    fseek(dados, sizeof(char), SEEK_SET);               //Posiciona o ponteiro do arquivo após o cabeçalho de dados
-    unsigned long byteoffset = ftell(dados);            //Byteoffset do primeiro registro
-    while(carregaRegistro(&registro, dados) != ERRO){   //Funçao que le do arquivo de dados e salva a informação lida no ponteiro passado como argumento
-        inserirAux(registro.id, byteoffset);            //Funçao para inserir o registro na arvore
-        byteoffset = ftell(dados);                      //Atualização do byteoffset do proximo registro do arquivo, para uma posterior inserção
+    fseek(dados, sizeof(char), SEEK_SET);                            //Posiciona o ponteiro do arquivo após o cabeçalho de dados
+    unsigned long byteoffset = ftell(dados);                         //Byteoffset do primeiro registro
+    tRegistro registro;                                              //Registro auxiliar para salvar as informações do arquivo de dados.
+    while(carregaRegistro(&registro, dados) != ERRO){                //Funçao que le do arquivo de dados e salva a informação lida no ponteiro passado como argumento
+        if(busca(&registro, registro.id, &byteoffset) == ENCONTRADO) //Busca o ID obtido na Árvore-B.
+            continue;                                                //Caso a chave já se encontre na Árvore-B (retorne encontrado) pula para o próximo registro.
+        inserirAux(registro.id, byteoffset);                         //Funçao para inserir o registro na arvore
+        byteoffset = ftell(dados);                                   //Atualização do byteoffset do proximo registro do arquivo, para uma posterior inserção
     }
     fclose(dados);      //Fechamento do arquivo de dados
     return TRUE;
@@ -193,6 +195,7 @@ int inserir(int id, char titulo[], char genero[])
     byteoffset = ftell(dados);
     inserirArq(id, titulo, genero, dados);
     fflush(dados);
+    getchar();
     int valorRetorno = inserirAux(id, byteoffset);
     escreveCabecalhoDados(1, dados);                //Atualiza o cabeçalho de dados com a flag 1 (a Árvore-B está atualizada).
     fclose(dados);
@@ -378,7 +381,12 @@ int imprimeArvore()
     int raiz;
     carregaRaiz(&raiz, indice);
     pagina atual;
-    carregaPagina(&atual, raiz, indice);
+    if(carregaPagina(&atual, raiz, indice) == NAOENCONTRADO)
+    {
+        gravarLog("Erro: Arvore-B nao encontrada\n");
+        fclose(indice);
+        return NAOENCONTRADO;
+    }
     int erro = 0;
     EntraFila(&f, atual, &erro);
     int nivel = 0;

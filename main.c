@@ -41,19 +41,18 @@ int main()
                 char titulo[50];
                 limitante1 = '0';     //C�digo ASCII da primero alpha numerico
                 limitante2 = 'z';    //C�digo ASCII da ultimo alphanumerico
-                tratamentoEntrada(titulo, buffer, limitante1, limitante2);
+                tratamentoEntrada(titulo, buffer, limitante1, limitante2, TRUE);
 
                 printf("Qual o genero da musica a ser inserida?\n");
                 char genero[50];
-                tratamentoEntrada(genero, buffer, limitante1, limitante2);
+                tratamentoEntrada(genero, buffer, limitante1, limitante2, TRUE);
 
                 printf("Qual o id da musica a ser inserida?\n");
 
                 limitante1 = '0';            //Codigo ASCII do numero 0.
                 limitante2 = '9';            //Codigo ASCII do numero 9
-                tratamentoEntrada(auxid, buffer, limitante1, limitante2);
+                tratamentoEntrada(auxid, buffer, limitante1, limitante2, FALSE);
                 id = atoi(auxid);       //Converte o auxid de string para int.
-
                 int retornoInsere = inserir(id, titulo, genero);
                 if(retornoInsere == ERRO)
                 {
@@ -67,7 +66,7 @@ int main()
 
                 limitante1 = '0';            //Codigo ASCII do numero 0.
                 limitante2 = '9';            //Codigo ASCII do numero 9
-                tratamentoEntrada(auxid, buffer, limitante1, limitante2);
+                tratamentoEntrada(auxid, buffer, limitante1, limitante2, FALSE);
                 id = atoi(auxid);       //Converte o auxid de string para int.
 
                 gravarLog("Execucao de operacao de PESQUISA de <%d>\n", id);
@@ -116,22 +115,33 @@ int main()
 *                  char aux[] = string que ser� salva o conteudo da leitura.
 *                  char buffer[] = auxiliar para leitura
 *                  int limite1 e limite2 = Bordas menor e maior do intervalo de c�digo ASCII desejado.
+*                  int espaco = serve para saber se o caractere " " (espaco) está habilitado na entrada
 *
 */
-void tratamentoEntrada(char aux[], char buffer[], char limite1, char limite2){
+void tratamentoEntrada(char aux[], char buffer[], char limite1, char limite2, int espaco){
     int condicional = TRUE, erro, cont;
     while(condicional){
         erro = FALSE;
         cont = 0;
         fgets(buffer, 50, stdin);
-        sscanf(buffer, "%s", aux);
-
+        //sscanf(buffer, "s", aux);
+        int tam = strlen(buffer) - 1;
+        if (buffer[tam] == '\n')
+            buffer[tam] = '\0';
+        strcpy(aux, buffer);
         while(aux[cont] != '\0' && erro == FALSE){
-            erro = TRUE;
 
-            if(aux[cont] >= limite1 && aux[cont] <= limite2)
-                erro = FALSE;
-
+            if( !(aux[cont] >= limite1 && aux[cont] <= limite2) ){
+                if(espaco){
+                    if(aux[cont] != 32){
+                        erro = TRUE;
+                    }
+                    else
+                        erro = FALSE;
+                }
+                else
+                    erro = TRUE;
+            }
             cont++;
         }
 

@@ -20,7 +20,10 @@ int busca(tRegistro* registro, int id, unsigned long* byteoffset)
     chave buscaChave;
     buscaChave.id = id;
     if(buscaAux(atual, &buscaChave, indice) == NAOENCONTRADO)
-        return NAOENCONTRADO;               //retorna o código de "chave não encontrada"
+    {
+        fclose(indice);
+        return NAOENCONTRADO;   //retorna o código de "chave não encontrada"
+    }
     fclose(indice);
     *byteoffset = buscaChave.byteoffset;
 

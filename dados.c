@@ -25,6 +25,7 @@ int checagem()
                 return ERRO;    //código de erro                      //
         }                                                             //
     }
+    fclose(dados);
     return TRUE;
 }
 

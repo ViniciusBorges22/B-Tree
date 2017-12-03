@@ -5,7 +5,7 @@
 #include "arvore_b.h"
 #include "tad_fila.h"
 
-int busca(tRegistro* registro, int id, long* byteoffset)
+int busca(tRegistro* registro, int id, unsigned long* byteoffset)
 {
     FILE* indice;
     if((indice = fopen("arvore.idx", "rb")) == NULL)
@@ -31,15 +31,9 @@ int busca(tRegistro* registro, int id, long* byteoffset)
         return ERRO;              //código de erro
     }
     fseek(dados, buscaChave.byteoffset, SEEK_SET);  //posiciona o ponteiro do arquivo de dados no registro desejado
-    char size;                                  //tamanho do registro
-    fread(&size, sizeof(char), 1, dados);       //lê o tamanho do registro do arquivo
-    char buffer[1000];
-    fread(&buffer, size, 1, dados);             //lê o registro e armazena no buffer
+    if(carregaRegistro(registro, dados) == ERRO)
+        return NAOENCONTRADO;
     fclose(dados);
-    int pos = 0;
-    sscanf(parser(buffer, &pos), "%d", &(registro->id));
-    strcpy(registro->titulo, parser(buffer, &pos));
-    strcpy(registro->genero, parser(buffer, &pos));
     return ENCONTRADO;                          //código de "chave encontrada"
 }
 
@@ -52,46 +46,6 @@ int buscaAux(pagina atual, chave* buscaChave, FILE* indice)
             return NAOENCONTRADO;
     }
     return pos;
-}
-
-int carregaPagina(pagina* atual, int RRN, FILE* indice)
-{
-    if(RRN < 0)
-        return NAOENCONTRADO;
-    fseek(indice, RRN*sizeof(pagina) + 2*sizeof(int), SEEK_SET);
-    fread(atual, sizeof(pagina), 1, indice);
-    return ENCONTRADO;
-}
-
-int carregaRaiz(int* raiz, FILE* indice)
-{
-    if(*raiz < 0)
-        return NAOENCONTRADO;
-    rewind(indice);
-    fread(raiz, sizeof(int), 1, indice);
-    return ENCONTRADO;
-}
-
-void escrevePagina(pagina atual, int RRN, FILE* indice)
-{
-    fseek(indice, RRN*sizeof(pagina) + 2*sizeof(int), SEEK_SET);
-    fwrite(&atual, sizeof(pagina), 1, indice);
-}
-
-int gravarLog(const char* format, ...)
-{
-    FILE* log;
-    if((log = fopen("logVBorges.txt", "ab")) == NULL)
-    {
-        fprintf(stderr, "Erro na abertura do arquivo de log\n");
-        return ERRO;              //código de erro
-    }
-    va_list args;
-    va_start(args, format);
-    vfprintf(log, format, args);
-    va_end(args);
-    fclose(log);
-    return TRUE;
 }
 
 int buscaBinaria(chave chaves[], chave* novaChave, int esq, int dir)
@@ -124,6 +78,50 @@ int buscaBinaria(chave chaves[], chave* novaChave, int esq, int dir)
     }
 }
 
+int carregaPagina(pagina* atual, int RRN, FILE* indice)
+{
+    if(RRN < 0)
+        return NAOENCONTRADO;
+    fseek(indice, RRN*sizeof(pagina) + 2*sizeof(int), SEEK_SET);
+    fread(atual, sizeof(pagina), 1, indice);
+    return ENCONTRADO;
+}
+
+void carregaRaiz(int* raiz, FILE* indice)
+{
+    rewind(indice);
+    fread(raiz, sizeof(int), 1, indice);
+}
+
+void escrevePagina(pagina atual, int RRN, FILE* indice)
+{
+    fseek(indice, RRN*sizeof(pagina) + 2*sizeof(int), SEEK_SET);
+    fwrite(&atual, sizeof(pagina), 1, indice);
+}
+
+void escreveCabecalho(int raiz, int ultimo_rrn, FILE* indice)
+{
+    rewind(indice);
+    fwrite(&raiz, sizeof(int), 1, indice);
+    fwrite(&ultimo_rrn, sizeof(int), 1, indice);
+}
+
+int gravarLog(const char* format, ...)
+{
+    FILE* log;
+    if((log = fopen("logVBorges.txt", "a")) == NULL)
+    {
+        fprintf(stderr, "Erro na abertura do arquivo de log\n");
+        return ERRO;              //código de erro
+    }
+    va_list args;
+    va_start(args, format);
+    vfprintf(log, format, args);
+    va_end(args);
+    fclose(log);
+    return TRUE;
+}
+
 /*  Função usada para construir um arquivo de indices "Arvore", a partir de um arquivo de dados posteriormente inserido.
 *   Ela funciona da seguinte forma:
 *       Um laço percorre todo o arquivo de dados, armezenando os registros nele presente e os byteoffset de cada um deles
@@ -140,8 +138,8 @@ int checagem()
         fprintf(stderr, "Erro na leitura do arquivo de dados\n");
         return ERRO;              //código de erro
     }
-    long byteoffset = 0;                            // Primeiro byteoffset do primeiro registro
-    while(proxRegistro(dados, &registro) != ERRO){  // funçao que le do arquivo de dados e salva a informação lida no ponteiro passado como argumento
+    unsigned long byteoffset = 0;                            // Primeiro byteoffset do primeiro registro
+    while(carregaRegistro(&registro, dados) != ERRO){  // funçao que le do arquivo de dados e salva a informação lida no ponteiro passado como argumento
         inserirAux(registro.id, byteoffset);        //Funçao para inserir o registro na arvore
         byteoffset = ftell(dados);                  //atualização do byteoffset do proximo registro do arquivo, para uma posterior inserção
     }
@@ -152,26 +150,32 @@ int checagem()
 int inserir(int id, char titulo[], char genero[])
 {
     gravarLog("Execucao de operacao de INSERCAO de <%d>, <%s>, <%s>.\n", id, titulo, genero);
+    tRegistro registro;
+    unsigned long byteoffset;
+    if(busca(&registro, id, &byteoffset) == ENCONTRADO)
+    {
+        gravarLog("Chave <%d> duplicada.\n", id);
+        return ENCONTRADO;
+    }
     FILE* dados;
-    if((dados = fopen("dados.dad", "a+b")) == NULL)
+    if((dados = fopen("dados.dad", "ab")) == NULL)
     {
         fprintf(stderr, "Erro na abertura do arquivo de dados\n");
         return ERRO;              //código de erro
     }
     fseek(dados, 0, SEEK_END);
-    long byteoffsetReg = ftell(dados);
-    int retorno;
-    if((retorno = inserirAux(id, byteoffsetReg)) != ENCONTRADO)
-        inserirArq(id, titulo, genero, dados);
+    byteoffset = ftell(dados);
+    inserirArq(id, titulo, genero, dados);
+    int valorRetorno = inserirAux(id, byteoffset);
     fclose(dados);
-    return retorno;
+    return valorRetorno;
 }
 
-int inserirAux(int id, long byteoffsetReg)
+int inserirAux(int id, unsigned long byteoffset)
 {
     chave novaChave;
     novaChave.id = id;
-    novaChave.byteoffset = byteoffsetReg;
+    novaChave.byteoffset = byteoffset;
     int raiz;
     FILE* indice;
     if((indice = fopen("arvore.idx", "r+b")) == NULL)
@@ -182,13 +186,10 @@ int inserirAux(int id, long byteoffsetReg)
             return ERRO;              //código de erro
         }
         int raiz = -1;
-        int contador = 0;
-        fwrite(&raiz, sizeof(int), 1, indice);
-        fwrite(&contador, sizeof(int), 1, indice);
-        rewind(indice);
+        int ultimo_rrn = 0;
+        escreveCabecalho(raiz, ultimo_rrn, indice);
     }
-	rewind(indice);
-    fread(&raiz, sizeof(int), 1, indice);
+	carregaRaiz(&raiz, indice);
     chave promo;
     int RRN_filho;
     int valorRetorno = inserirArv(raiz, novaChave, &promo, &RRN_filho, indice);
@@ -203,14 +204,9 @@ int inserirAux(int id, long byteoffsetReg)
         fseek(indice, sizeof(int), SEEK_SET);
         fread(&ultimo_rrn, sizeof(int), 1, indice);
         raiz = ultimo_rrn++;
-        rewind(indice);
-        fwrite(&raiz, sizeof(int), 1, indice);
-        fwrite(&ultimo_rrn, sizeof(int), 1, indice);
-        fseek(indice, raiz*sizeof(pagina), SEEK_CUR);
-        fwrite(&novaRaiz, sizeof(pagina), 1, indice);
+        escreveCabecalho(raiz, ultimo_rrn, indice);
+        escrevePagina(novaRaiz, raiz, indice);
     }
-    else if(valorRetorno == ENCONTRADO)
-        gravarLog("Chave <%d> duplicada.\n", id);
     else
         gravarLog("Chave <%d> inserida com sucesso.\n", id);
     fclose(indice);
@@ -239,12 +235,10 @@ int inserirArv(int RRN_atual, chave novaChave, chave* promo, int* RRN_filho, FIL
         pagina atual;
         carregaPagina(&atual, RRN_atual, indice);
         int pos = buscaBinaria(atual.chaves, &novaChave, 0, atual.tam-1);
-        if(pos == ENCONTRADO)     //se a chave já se encontra na árvore
-            return ENCONTRADO;    //retorna código de "chave já existente"
         chave promoAux;
         int RRN_filhoAux;
         int valorRetorno = inserirArv(atual.filhos[pos], novaChave, &promoAux, &RRN_filhoAux, indice);
-        if(valorRetorno == NAOPROMOCAO || valorRetorno == ENCONTRADO)
+        if(valorRetorno == NAOPROMOCAO)
             return valorRetorno;
         else if(atual.tam < ORDEM-1)    //se há espaço na página atual
         {

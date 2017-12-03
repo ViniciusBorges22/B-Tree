@@ -18,7 +18,7 @@
 typedef struct
 {
     int id;     // id da música
-    long byteoffset;   // Posição do registro desejado no arquivo de dados
+    unsigned long byteoffset;   // Posição do registro desejado no arquivo de dados
 }
 chave;
 
@@ -39,16 +39,17 @@ typedef struct
 paginaAux;  // Página auxiliar utilizada na função split
 
 //int inicializa();
-int busca(tRegistro* registro, int id, long* byteoffset);
+int busca(tRegistro* registro, int id, unsigned long* byteoffset);
 int buscaAux(pagina atual, chave* buscaChave, FILE* indice);
 int carregaPagina(pagina* atual, int RRN, FILE* indice);
-int carregaRaiz(int* raiz, FILE* indice);
+void carregaRaiz(int* raiz, FILE* indice);
 void escrevePagina(pagina atual, int RRN, FILE* indice);
+void escreveCabecalho(int raiz, int contador, FILE* indice);
 int gravarLog(const char* format, ...);
 int buscaBinaria(chave chaves[], chave* novaChave, int esq, int dir);
 int checagem();
 int inserir(int id, char titulo[], char genero[]);
-int inserirAux(int id, long byteoffsetReg);
+int inserirAux(int id, unsigned long byteoffset);
 int inserirArv(int RRN_atual, chave novaChave, chave* promo, int* RRN_filho, FILE* indice);
 int split(chave novaChave, int RRN_filho, pagina* atual, pagina* novaPagina, chave* promo, int* RRN_filho_promo);
 void atualizaPagina(chave chaves[], int filhos[], unsigned short* tam, chave novaChave, int RRN_filho);

@@ -10,7 +10,7 @@ int main()
     int menu = TRUE;
     int id, opt;
     char buffer[50];
-    long byteoffset;
+    unsigned long byteoffset;
     tRegistro registro;
 
     while(menu){

@@ -3,33 +3,32 @@
 #include <string.h>
 #include "dados.h"
 
-char montarBuffer(int id, char titulo[], char genero[], char buffer[])
-{
-    sprintf(buffer, "%d|%s|%s|", id, titulo, genero);
-    return (char) strlen(buffer);
-}
-
 void inserirArq(int id, char titulo[], char genero[], FILE* dados)
 {
-    char buffer[300];
+    char buffer[200];
     char tam = montarBuffer(id, titulo, genero, buffer);
     fwrite(&tam, sizeof(char), 1, dados);
     fwrite(&buffer, tam, 1, dados);
 }
 
-int proxRegistro(FILE* dados, tRegistro *registro)
+int carregaRegistro(tRegistro *registro, FILE* dados)
 {
     char size;    //tamanho do registro
     if(!fread(&size, sizeof(char), 1, dados))  //lê o tamanho do registro do arquivo e checa se nao chegou em EOF
         return ERRO;
-
-    char buffer[1000];
+    char buffer[200];
     fread(&buffer, size, 1, dados);            //lê o registro e armazena no buffer
     int pos = 0;
     sscanf(parser(buffer, &pos), "%d", &(registro->id));
     strcpy(registro->titulo, parser(buffer, &pos));
     strcpy(registro->genero, parser(buffer, &pos));
     return ENCONTRADO;
+}
+
+char montarBuffer(int id, char titulo[], char genero[], char buffer[])
+{
+    sprintf(buffer, "%d|%s|%s|", id, titulo, genero);
+    return (char) strlen(buffer);
 }
 
 char *parser(char *buffer, int *pos)

@@ -167,7 +167,10 @@ int atualizaArvore()
     tRegistro registro;                                              //Registro auxiliar para salvar as informações do arquivo de dados.
     while(carregaRegistro(&registro, dados) != ERRO){                //Funçao que le do arquivo de dados e salva a informação lida no ponteiro passado como argumento
         if(busca(&registro, registro.id, &byteoffset) == ENCONTRADO) //Busca o ID obtido na Árvore-B.
-            continue;                                                //Caso a chave já se encontre na Árvore-B (retorne encontrado) pula para o próximo registro.
+        {                                                            //Caso a chave já se encontre na Árvore-B (retorne encontrado) pula para o próximo registro.
+            byteoffset = ftell(dados);
+            continue;
+        }
         inserirAux(registro.id, byteoffset);                         //Funçao para inserir o registro na arvore
         byteoffset = ftell(dados);                                   //Atualização do byteoffset do proximo registro do arquivo, para uma posterior inserção
     }

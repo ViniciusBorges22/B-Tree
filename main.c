@@ -7,6 +7,12 @@ void tratamentoEntrada(char aux[], char buffer[], char limite1, char limite2);
 
 int main()
 {
+    if(checagem() == ERRO)                                                              //
+    {                                                                                   // Chama a função que faz a checagem da existência do arquivo de dados
+        fprintf(stderr, "\nErro na checagem inicial dos arquivos de dados e indices."); // e a atualização do arquivo de índices (caso esteja desatualizado).
+        getchar();                                                                      // Imprime uma mensagem caso ocorra algum erro durante o processo.
+        return ERRO;                                                                    //
+    }
     int menu = TRUE;
     int id, opt;
     char buffer[50];
@@ -81,7 +87,7 @@ int main()
                 break;
 
             case 1:
-                if(checagem() == ERRO)
+                if(atualizaArvore() == ERRO)
                 {
                     fprintf(stderr, "\nErro na criacao da arvore. Pressione qualquer tecla para continuar...");
                     getchar();

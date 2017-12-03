@@ -2,13 +2,56 @@
 #include <stdlib.h>
 #include <string.h>
 #include "dados.h"
+#include "arvore_b.h"
 
+//Função que executa uma checagem geral dos arquivos de dados e de indice.
+int checagem()
+{
+    FILE* dados;                                                      //
+    if((dados = fopen("dados.dad", "r+b")) == NULL)                   //
+    {                                                                 //
+        if((dados = fopen("dados.dad", "w+b")) == NULL)               // Verifica se existe o arquivo de dados.
+        {                                                             // Caso não exista, cria o arquivo e escreve o cabeçalho com a flag 1 (a Árvore-B está atualizada).
+            fprintf(stderr, "Erro na criação do arquivo de dados\n"); // Caso exista, pula para o "else" abaixo
+            return ERRO;    //código de erro                          //
+        }                                                             //
+        escreveCabecalhoDados(1, dados);                              //
+    }
+    else                                                              //
+    {                                                                 //
+        if(!estaAtualizado(dados))                                    // Verifica no cabeçalho do arquivo se a Árvore-B está atualizada.
+        {                                                             // Caso não esteja, chama a função que atualiza a Árvore.
+            if(atualizaArvore() == ERRO)                              // Caso não ocorra nenhum erro, retorna TRUE.
+                return ERRO;    //código de erro                      //
+        }                                                             //
+    }
+    return TRUE;
+}
+
+//Função que insere o registro (formatado) no arquivo de dados.
 void inserirArq(int id, char titulo[], char genero[], FILE* dados)
 {
     char buffer[200];
     char tam = montarBuffer(id, titulo, genero, buffer);
     fwrite(&tam, sizeof(char), 1, dados);
     fwrite(&buffer, tam, 1, dados);
+    escreveCabecalhoDados(0, dados);    //Atualiza o cabeçalho com a flag 0 (a Árvore-B não está atualizada).
+}
+
+//Função que atualiza o cabeçalho do arquivo de dados. A flag "atualizado" indica se a Árvore-B está atualizada em relação ao arquivo de dados.
+void escreveCabecalhoDados(char atualizado, FILE* dados)
+{
+    rewind(dados);                               //Retorna o ponteiro para o começo do arquivo (cabeçalho).
+    fwrite(&atualizado, sizeof(char), 1, dados); //Escreve a flag desejada no cabeçalho.
+}
+
+//Função que verifica no cabeçalho do arquivo se a Árvore-B está atualizada em relação ao arquivo de dados.
+int estaAtualizado(FILE* dados)
+{
+    rewind(dados);                              // Retorna o ponteiro do arquivo para o começo (cabeçalho).
+    char atualizado;                            // Varivável de flag.
+    fread(&atualizado, sizeof(char), 1, dados); // Lê a variável de flag do arquivo.
+    return (int) atualizado;                    // Retorna o valor da flag: 1 caso esteja atualizada ou 0 caso não esteja.
 }
 
 int carregaRegistro(tRegistro *registro, FILE* dados)

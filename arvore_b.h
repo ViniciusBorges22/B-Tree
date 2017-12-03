@@ -47,7 +47,7 @@ void escrevePagina(pagina atual, int RRN, FILE* indice);
 void escreveCabecalho(int raiz, int contador, FILE* indice);
 int gravarLog(const char* format, ...);
 int buscaBinaria(chave chaves[], chave* novaChave, int esq, int dir);
-int checagem();
+int atualizaArvore();
 int inserir(int id, char titulo[], char genero[]);
 int inserirAux(int id, unsigned long byteoffset);
 int inserirArv(int RRN_atual, chave novaChave, chave* promo, int* RRN_filho, FILE* indice);

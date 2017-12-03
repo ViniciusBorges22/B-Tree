@@ -13,7 +13,10 @@ typedef struct
 }
 tRegistro;
 
+int checagem();
 void inserirArq(int id, char titulo[], char genero[], FILE* dados);
+void escreveCabecalhoDados(char flag, FILE* dados);
+int estaAtualizado(FILE* dados);
 int carregaRegistro(tRegistro *registro, FILE* dados);
 char montarBuffer(int id, char titulo[], char genero[], char buffer[]);
 char *parser(char *buffer, int *pos);

@@ -129,7 +129,7 @@ int gravarLog(const char* format, ...)
 *          presente nela. A condiçao de parada do laço é o fim do arquivo de dados.
 *       Em seguida é salvo no log que a ação foi concluida e o arquivo de dados é fechado.
 */
-int checagem()
+int atualizaArvore()
 {
     gravarLog("Execucao da criacao do arquivo de indice arvore.idx com base no arquivo de dados dados.dad.\n");  //Escrita no Log
     tRegistro registro;       // Registro auxiliar para salvar as informações do arquivo de dados.
@@ -138,12 +138,13 @@ int checagem()
         fprintf(stderr, "Erro na leitura do arquivo de dados\n");
         return ERRO;              //código de erro
     }
-    unsigned long byteoffset = 0;                            // Primeiro byteoffset do primeiro registro
-    while(carregaRegistro(&registro, dados) != ERRO){  // funçao que le do arquivo de dados e salva a informação lida no ponteiro passado como argumento
-        inserirAux(registro.id, byteoffset);        //Funçao para inserir o registro na arvore
-        byteoffset = ftell(dados);                  //atualização do byteoffset do proximo registro do arquivo, para uma posterior inserção
+    fseek(dados, sizeof(char), SEEK_SET);               //Posiciona o ponteiro do arquivo após o cabeçalho de dados
+    unsigned long byteoffset = ftell(dados);            //Byteoffset do primeiro registro
+    while(carregaRegistro(&registro, dados) != ERRO){   //Funçao que le do arquivo de dados e salva a informação lida no ponteiro passado como argumento
+        inserirAux(registro.id, byteoffset);            //Funçao para inserir o registro na arvore
+        byteoffset = ftell(dados);                      //Atualização do byteoffset do proximo registro do arquivo, para uma posterior inserção
     }
-    fclose(dados);      //fechamento do arquivo de dados
+    fclose(dados);      //Fechamento do arquivo de dados
     return TRUE;
 }
 
@@ -167,6 +168,7 @@ int inserir(int id, char titulo[], char genero[])
     byteoffset = ftell(dados);
     inserirArq(id, titulo, genero, dados);
     int valorRetorno = inserirAux(id, byteoffset);
+    escreveCabecalhoDados(1, dados);                //Atualiza o cabeçalho de dados com a flag 1 (a Árvore-B está atualizada).
     fclose(dados);
     return valorRetorno;
 }

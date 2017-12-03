@@ -2,8 +2,7 @@
 #include <stdlib.h>
 #include "arvore_b.h"
 
-
-void tratamentoEntrada(char aux[], char buffer[], char limite1, char limite2);
+void tratamentoEntrada(char aux[], char buffer[], char limite1, char limite2, int espaco);
 
 int main()
 {

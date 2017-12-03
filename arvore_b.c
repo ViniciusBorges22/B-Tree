@@ -16,7 +16,11 @@ int busca(tRegistro* registro, int id, unsigned long* byteoffset)
     int raiz;
     carregaRaiz(&raiz, indice);
     pagina atual;                               //página auxiliar para buscar na árvore
-    carregaPagina(&atual, raiz, indice);
+    if(carregaPagina(&atual, raiz, indice) == NAOENCONTRADO)
+    {
+        fclose(indice);
+        return NAOENCONTRADO;
+    }
     chave buscaChave;
     buscaChave.id = id;
     if(buscaAux(atual, &buscaChave, indice) == NAOENCONTRADO)
@@ -125,6 +129,24 @@ int gravarLog(const char* format, ...)
     return TRUE;
 }
 
+int verificaIndice()
+{
+    FILE* indice;
+    if((indice = fopen("arvore.idx", "r+b")) == NULL)
+    {
+        if((indice = fopen("arvore.idx", "w+b")) == NULL)
+        {
+            fprintf(stderr, "Erro na criação do arquivo de indices\n");
+            return ERRO;              //código de erro
+        }
+        int raiz = -1;
+        int ultimo_rrn = 0;
+        escreveCabecalho(raiz, ultimo_rrn, indice);
+    }
+    fclose(indice);
+    return TRUE;
+}
+
 /*  Função usada para construir um arquivo de indices "Arvore", a partir de um arquivo de dados posteriormente inserido.
 *   Ela funciona da seguinte forma:
 *       Um laço percorre todo o arquivo de dados, armezenando os registros nele presente e os byteoffset de cada um deles
@@ -162,7 +184,7 @@ int inserir(int id, char titulo[], char genero[])
         return ENCONTRADO;
     }
     FILE* dados;
-    if((dados = fopen("dados.dad", "ab")) == NULL)
+    if((dados = fopen("dados.dad", "r+b")) == NULL)
     {
         fprintf(stderr, "Erro na abertura do arquivo de dados\n");
         return ERRO;              //código de erro
@@ -170,6 +192,7 @@ int inserir(int id, char titulo[], char genero[])
     fseek(dados, 0, SEEK_END);
     byteoffset = ftell(dados);
     inserirArq(id, titulo, genero, dados);
+    fflush(dados);
     int valorRetorno = inserirAux(id, byteoffset);
     escreveCabecalhoDados(1, dados);                //Atualiza o cabeçalho de dados com a flag 1 (a Árvore-B está atualizada).
     fclose(dados);
@@ -185,14 +208,8 @@ int inserirAux(int id, unsigned long byteoffset)
     FILE* indice;
     if((indice = fopen("arvore.idx", "r+b")) == NULL)
     {
-        if((indice = fopen("arvore.idx", "w+b")) == NULL)
-        {
-            fprintf(stderr, "Erro na criação do arquivo de indices\n");
-            return ERRO;              //código de erro
-        }
-        int raiz = -1;
-        int ultimo_rrn = 0;
-        escreveCabecalho(raiz, ultimo_rrn, indice);
+        fprintf(stderr, "Erro na abertura do arquivo de indices\n");
+        return ERRO;              //código de erro
     }
 	carregaRaiz(&raiz, indice);
     chave promo;
@@ -212,7 +229,7 @@ int inserirAux(int id, unsigned long byteoffset)
         escreveCabecalho(raiz, ultimo_rrn, indice);
         escrevePagina(novaRaiz, raiz, indice);
     }
-    else
+    if(valorRetorno != ERRO)
         gravarLog("Chave <%d> inserida com sucesso.\n", id);
     fclose(indice);
     return valorRetorno;

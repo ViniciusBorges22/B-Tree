@@ -11,15 +11,19 @@ int checagem()
     if((dados = fopen("dados.dad", "r+b")) == NULL)                   //
     {                                                                 //
         if((dados = fopen("dados.dad", "w+b")) == NULL)               // Verifica se existe o arquivo de dados.
-        {                                                             // Caso não exista, cria o arquivo e escreve o cabeçalho com a flag 1 (a Árvore-B está atualizada).
-            fprintf(stderr, "Erro na criação do arquivo de dados\n"); // Caso exista, pula para o "else" abaixo
-            return ERRO;    //código de erro                          //
+        {                                                             // Caso não exista, cria o arquivo e escreve o cabeçalho com a flag 1 (a Árvore-B está atualizada),
+            fprintf(stderr, "Erro na criação do arquivo de dados\n"); // em seguida, chama a função que verifica o arquivo de indice e cria o mesmo caso não exista.
+            return ERRO;    //código de erro                          // Caso o arquivo de dados exista, pula para o "else" abaixo
         }                                                             //
         escreveCabecalhoDados(1, dados);                              //
+        if(verificaIndice() == ERRO)                                  //
+            return ERRO;                                              //
     }
     else                                                              //
     {                                                                 //
-        if(!estaAtualizado(dados))                                    // Verifica no cabeçalho do arquivo se a Árvore-B está atualizada.
+        if(verificaIndice() == ERRO)                                  // Verifica se o arquivo de indice existe.
+            return ERRO;                                              //
+        if(!estaAtualizado(dados))                                    // Em seguida, verifica no cabeçalho se a Árvore-B está atualizada.
         {                                                             // Caso não esteja, chama a função que atualiza a Árvore.
             if(atualizaArvore() == ERRO)                              // Caso não ocorra nenhum erro, retorna TRUE.
                 return ERRO;    //código de erro                      //

@@ -17,16 +17,16 @@
 
 typedef struct
 {
-    int id;     // id da música
+    int id;                     // ID da música
     unsigned long byteoffset;   // Posição do registro desejado no arquivo de dados
 }
 chave;
 
 typedef struct
 {
-    unsigned short tam;    // Quantidade de chaves armazenadas na página
-    chave chaves[ORDEM-1];    // Vetor de chaves
-    int filhos[ORDEM];   // "Ponteiros" (RRN) para os filhos da página
+    unsigned short tam;     // Quantidade de chaves armazenadas na página
+    chave chaves[ORDEM-1];  // Vetor de chaves
+    int filhos[ORDEM];      // "Ponteiros" (RRN) para os filhos da página
 }
 pagina;     // Página (nó) da árvore
 
@@ -38,7 +38,6 @@ typedef struct
 }
 paginaAux;  // Página auxiliar utilizada na função split
 
-//int inicializa();
 int busca(tRegistro* registro, int id, unsigned long* byteoffset);
 int buscaAux(pagina atual, chave* buscaChave, FILE* indice);
 int carregaPagina(pagina* atual, int RRN, FILE* indice);
@@ -46,6 +45,7 @@ void carregaRaiz(int* raiz, FILE* indice);
 void escrevePagina(pagina atual, int RRN, FILE* indice);
 void escreveCabecalho(int raiz, int contador, FILE* indice);
 int gravarLog(const char* format, ...);
+int verificaIndice();
 int buscaBinaria(chave chaves[], chave* novaChave, int esq, int dir);
 int atualizaArvore();
 int inserir(int id, char titulo[], char genero[]);

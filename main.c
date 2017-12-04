@@ -121,33 +121,37 @@ int main()
 *
 */
 void tratamentoEntrada(char aux[], char buffer[], char limite1, char limite2, int espaco){
-    int condicional = TRUE;      //Condicional serve para repeticao do laço
-    int erro;               //Indica se o usuario Digitou a entrada corretamente
-    int cont;           //Usado para o percorrimento da String inteira
-    while(condicional){     //While se repete até o usuario digitar uma entrada no formato correto, ou seja sem caracteres especiais, com ou sem espaco e dentro do intervalo definido no argumento
-        erro = FALSE;       //Inicialmente Erro é setado para FALSO
-        cont = 0;           //Contador inicia na primeira posicao da String (0)
+    int condicional = TRUE;       //Condicional serve para repeticao do laço
+    int erro;                     //Indica se o usuario Digitou a entrada corretamente
+    int cont;                     //Usado para o percorrimento da String inteira
+    while(condicional){           //While se repete até o usuario digitar uma entrada no formato correto, ou seja sem caracteres especiais,
+                                  //com ou sem espaco e dentro do intervalo definido no argumento
+        erro = FALSE;             //Inicialmente Erro é setado para FALSO
+        cont = 0;                 //Contador inicia na primeira posicao da String (0)
         fgets(buffer, 50, stdin);       //Leitura da entrada com tamanho maximo de 50 caracteres
-        int tam = strlen(buffer) ;       //Obtencao do tamanho da String para podermos remover o new line (\n) que sempre é lido uma posicao antes do final da String(\0)
-        if (buffer[tam-1] == '\n')        // Checa se realmente existe um \n em tam-1 (tam = tamanho da String)
+        int tam = strlen(buffer) ;      //Obtencao do tamanho da String para podermos remover o new line (\n) que sempre é lido uma posicao
+                                        //antes do final da String(\0)
+        if (buffer[tam-1] == '\n')      // Checa se realmente existe um \n em tam-1 (tam = tamanho da String)
             buffer[tam-1] = '\0';       //Substitui esse \n, se houver, por um fim de string (\0), para que possamos gravar no arquivo sem quebra de linha
         strcpy(aux, buffer);            //Copiamos agora a entrada do usuario, parcialmente formatada para a String de retorno
 
         while(aux[cont] != '\0' && erro == FALSE){                   // Laço se repete enquanto nao chegarmos no final da String e enquanto nao huver erro
-//                                                                   //
-            if( !(aux[cont] >= limite1 && aux[cont] <= limite2) ){   //  Checa se o caractere da String na posicao Cont nao está dentro do intervalo
-                if(espaco){                                          //       Se nao esiver no intervalo, checa-se se o espaço está permitido nesse formato de entrada(Titulo e Genero)(espaço é um argumento da funcao)
-                    if(aux[cont] != 32){                             //       Se espaco tiver habilitado e o caractere analisado nao for Espaco (32 é o código ASCII de espaco) Erro eh setado como TRUE
-                        erro = TRUE;                                 //       Se isso ocorrer o while nao se repetirá mais, pois um caractere diferente do estabelecido foi inserido
-                    }                                                //
+                                                                     //
+            if( !(aux[cont] >= limite1 && aux[cont] <= limite2) ){   // Checa se o caractere da String na posicao Cont nao está dentro do intervalo
+                if(espaco){                                          // Se nao esiver no intervalo, checa-se se o espaço está permitido nesse formato de
+                                                                     //  entrada(Titulo e Genero)(espaço é um argumento da funcao)
+                    if(aux[cont] != 32){                             // Se espaco tiver habilitado e o caractere analisado nao for Espaco (32 é o código ASCII
+                                                                     //  de espaco) Erro eh setado como TRUE
+                        erro = TRUE;                                 // Se isso ocorrer o while nao se repetirá mais, pois um caractere diferente do estabelecido
+                    }                                                //  foi inserido
                 }                                                    //
-                else                                                 //  Se o espaco nao tiver habilitado e o caractere estiver fora do intervalo estabelecido entao eh um caractere invalido, e Erro eh setado como TRUE
-                    erro = TRUE;                                     //
+                else                                                 // Se o espaco nao tiver habilitado e o caractere estiver fora do intervalo estabelecido
+                    erro = TRUE;                                     //  entao eh um caractere invalido, e Erro é setado como TRUE
             }                                                        //
             cont++;                                                  //  Contado é incrementado
         }                                                            //
 
-        if(erro == FALSE){              //Checa Erro eh falso, caso positivo, a variavel do primeiro while eh posta como Falso e a entrada está formatada corretamente
+        if(erro == FALSE){      //Checa Erro é falso, caso positivo, a variavel do primeiro while é posta como Falso e a entrada está formatada corretamente
             condicional = FALSE;
         }
         else                    //Entra aqui se erro for True, ou seja, a entrada foi inserida incorretamente

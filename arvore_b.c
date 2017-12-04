@@ -149,7 +149,6 @@ int inserirAux(int id, unsigned long byteoffset)
         raiz = ultimo_rrn++;                                        // O RRN da raiz será o último RRN disponível. Após essa atribução, o último RRN é incrementado.
         escreveCabecalho(raiz, ultimo_rrn, indice);                 // Atualiza o cabeçalho com os novos valores de raiz e ultimo_rrn.
         escrevePagina(novaRaiz, raiz, indice);                      // Escreve a nova página raiz no arquivo de indice.
-        gravarLog("Chave <%d> promovida\n", promo->id);             // Escreve no arquivo de log a promoção da nova raiz.
     }
     if(valorRetorno != ERRO)                                        // Caso a inserção retorne um resultado diferente de erro
         gravarLog("Chave <%d> inserida com sucesso.\n", id);        // grava a mensagem de inserção bem sucedida no arquivo de log.
@@ -166,6 +165,7 @@ int inserirAux(int id, unsigned long byteoffset)
     RRN_filho: RRN do filho direito da chave promovida
 */
 
+// Função que insere recursivamente uma nova chave na Árvore-B.
 int inserirArv(int RRN_atual, chave novaChave, chave* promo, int* RRN_filho, FILE* indice)
 {
     if(RRN_atual == -1)         // Base da recursão:
@@ -271,71 +271,80 @@ int split(chave novaChave, int RRN_filho, pagina* atual, pagina* novaPagina, cha
 // Função que executa a impressão da Árvore-B no arquivo de log.
 int imprimeArvore()
 {
-    gravarLog("Execucao de operacao para mostrar a arvore-B gerada:\n");
-
-    Fila f;
-    CriaFila(&f);
+    gravarLog("Execucao de operacao para mostrar a arvore-B gerada:\n"); // Escreve no arquivo de log a mensagem de impressão da Árvore-B.
+    fila f;
+    criarFila(&f);                                                   // Cria uma fila dinâmica e encadeada.
     FILE* indice;
-    if((indice = fopen("arvore.idx", "rb")) == NULL)
-    {
-        fprintf(stderr, "Erro na abertura do arquivo de indices\n");
-        return ERRO;              //código de erro
+    if((indice = fopen("arvore.idx", "rb")) == NULL)                 //
+    {                                                                // Tenta abrir o arquivo de indice.
+        fprintf(stderr, "Erro na abertura do arquivo de indice\n");  // Caso não consiga, imprime mensagem de erro e retorna ERRO.
+        return ERRO;    //código de erro                             //
     }
-    int raiz;
-    carregaRaiz(&raiz, indice);
-    pagina atual;
-    if(carregaPagina(&atual, raiz, indice) == NAOENCONTRADO)
-    {
-        gravarLog("Erro: Arvore-B nao encontrada\n");
-        fclose(indice);
-        return NAOENCONTRADO;
+    int raiz;                                                       //
+    carregaRaiz(&raiz, indice);                                     // Carrega o RRN da raiz do arquivo de indice.
+    pagina atual;                                                   // Declara uma página que será usada para percorrer e imprimir a Árvore.
+    if(carregaPagina(&atual, raiz, indice) == NAOENCONTRADO)        // Carrega a página raiz do arquivo de indice.
+    {                                                               // Caso não encontre (a Árvore está vazia).
+        gravarLog("Erro: Arvore-B nao encontrada\n");               // Escreve no arquivo de log que não foi encontrada.
+        fclose(indice);                                             // Fecha o arquivo de indice.
+        return NAOENCONTRADO;                                       // Retorna NAOENCONTRADO.
     }
-    int erro = 0;
-    EntraFila(&f, atual, &erro);
-    int nivel = 0;
-    int cont = 1;
-    int somaCont = 0;
-    while(!EstaVaziaFila(f) && !erro)
+    if(inserirFila(&f, atual) == ERRO)                              // Insere a página atual na fila.
+    {                                                               //
+        fprintf(stderr, "Erro na operacao de insercao na fila\n");  // Caso ocorra um erro de alocação, imprime mensagem de erro
+        return ERRO;                                                // e retorna ERRO.
+    }
+    int nivel = 0;                          // Nível da página atual que será impressa no arquivo.
+    int cont = 1;                           // Contador de quantas páginas o nível atual possui.
+    int somaCont = 0;                       // Contador auxiliar que soma a quantidade de páginas do nível abaixo do atual.
+    while(!estaVaziaFila(&f))               // Executa um laço enquanto a fila não está vazia.
     {
-        if(cont == 0)
-        {
-            nivel++;
-            cont = somaCont;
-            somaCont = 0;
+        if(cont == 0)                       // Caso todas as páginas do mesmo nível tenham sido impressas.
+        {                                   //
+            nivel++;                        // Incrementa o nível.
+            cont = somaCont;                // Atualiza o contador para a indicar a quantidade de páginas do próximo nível.
+            somaCont = 0;                   // Reinicia o contador auxiliar.
         }
-        SairFila(&f, &atual, &erro);
-        imprimePagina(atual, nivel);
-        cont--;
-        int i;
-        pagina aux;
-        for(i = 0; i <= atual.tam && !erro; i++)
+        if(removerFila(&f, &atual) == ERRO)                           // Remove a primeira página da fila e armazena em "atual".
         {
-            if(carregaPagina(&aux, atual.filhos[i], indice) == NAOENCONTRADO)
-                break;
-            EntraFila(&f, aux, &erro);
+            fprintf(stderr, "Erro na operacao de remocao da fila\n"); // Caso ocorra algum erro, imprime mensagem de erro
+            return ERRO;                                              // e retorna ERRO.
         }
-        somaCont += atual.tam + 1;
+        imprimePagina(atual, nivel);        // Imprime a página atual no arquivo de log.
+        cont--;                             // Decrementa o contador.
+        int i;                              // Contador de laço.
+        pagina aux;                         // Página auxiliar, será usada para carregar as páginas filhas da atual no laço abaixo.
+        for(i = 0; i <= atual.tam; i++)     // Laço que percorre a página atual.
+        {
+            if(carregaPagina(&aux, atual.filhos[i], indice) == NAOENCONTRADO) // Carrega o filho de posição 'i' da página atual e armazena em "aux".
+                break;                                                        // Caso o filho não seja encontrado ("atual" é folha) interrompe o laço.
+            if(inserirFila(&f, aux) == ERRO)                                  // Insere o filho na fila.
+            {
+                fprintf(stderr, "Erro na operacao de insercao na fila\n");    // Caso ocorra algum erro, imprime mensagem de erro
+                return ERRO;                                                  // e retorna ERRO.
+            }
+        }
+        somaCont += atual.tam + 1;          // Soma a quantidade de páginas filhas da "atual" ao valor que já estava no contador auxiliar.
     }
-    fclose(indice);
-    if(erro)
-        return ERRO;
-    else
-        return TRUE;
+    fclose(indice);                         // Fecha o arquivo de indice.
+    return TRUE;                            // Retorna TRUE para indicar que não houve erro.
 }
 
+// Função auxiliar à "imprimeArvore".
+// Recebe uma página e executa a impressão de seu nível, seu tamanho e suas chaves no arquivo de log.
 void imprimePagina(pagina atual, int nivel)
 {
-    char mensagem[200];
-    sprintf(mensagem, "%d %hu ", nivel, atual.tam);
-    int i;
-    char chave[50];
-    for(i = 0; i < atual.tam; i++)
+    char mensagem[200];                                 // String onde será escrita a mensagem a ser gravada no log.
+    sprintf(mensagem, "%d %hu ", nivel, atual.tam);     // Escreve no começo da "mensagem" o nível e o tamanho da página atual.
+    int i;                                              // Contador.
+    char chave[50];                                     // String onde serão escritas as chaves presentes na página atual.
+    for(i = 0; i < atual.tam; i++)                      // Laço que percorre toda a página atual.
     {
-        sprintf(chave, "<%d/%li> ", atual.chaves[i].id, atual.chaves[i].byteoffset);
-        strcat(mensagem, chave);
+        sprintf(chave, "<%d/%li> ", atual.chaves[i].id, atual.chaves[i].byteoffset); //Escreve no começo da "chave" a chave de posição i da página.
+        strcat(mensagem, chave);                                                     //Concatena a string presente em "chave" no final da string em "mensagem".
     }
-    strcat(mensagem, "\n");
-    gravarLog(mensagem);
+    strcat(mensagem, "\n");                             // Concatena uma quebra de linha no final da string em "mensagem".
+    gravarLog(mensagem);                                // Grava a string em "mensagem" no arquivo de log.
 }
 
 // Função que lê a página do arquivo de indice a partir de um RRN passado como parâmetro.

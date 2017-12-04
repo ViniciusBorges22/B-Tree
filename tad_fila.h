@@ -5,22 +5,21 @@
 #include <stdlib.h>
 #include "arvore_b.h"
 
-#define TAMFILA 100
+typedef pagina elem;        //tipo de dados
 
-typedef pagina elem;
+typedef struct bloco{
+    elem info;              //elemento da fila
+    struct bloco* prox;     //ponteiro para o próximo
+}no;                        //nó da fila
 
-typedef struct {
-    elem info[TAMFILA];
-    int inicio;
-    int fim;
-    int total;
-}Fila;
+typedef struct{
+   no* inicio;              //ponteiro para o inicio da fila
+   no* fim;                 //ponteiro para o fim da fila
+}fila;
 
-void CriaFila(Fila *F);
-int EstaVaziaFila(Fila F);
-int EstaCheiaFila(Fila F);
-void EntraFila(Fila *F, elem item, int *erro);
-void SairFila(Fila *F, elem *item, int *erro);
-void EsvaziaFila(Fila *F);
+void criarFila(fila* L);
+int estaVaziaFila(fila* L);
+int inserirFila(fila* L, elem pag);
+int removerFila(fila* L, elem* info);
 
 #endif // TAD_FILA_H_INCLUDED

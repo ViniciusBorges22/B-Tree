@@ -5,86 +5,92 @@
 #include "arvore_b.h"
 #include "tad_fila.h"
 
+//Função que busca uma chave na Árvore-B através de um ID passado como parâmetro.
+//Em seguida, retorna o registro buscado e o byteoffset dele no arquivo de dados atrás de parâmetros.
 int busca(tRegistro* registro, int id, unsigned long* byteoffset)
 {
-    FILE* indice;
-    if((indice = fopen("arvore.idx", "rb")) == NULL)
-    {
-        fprintf(stderr, "Erro na abertura do arquivo de indices\n");
-        return ERRO;              //código de erro
+    FILE* indice;                                                   //
+    if((indice = fopen("arvore.idx", "rb")) == NULL)                // Tenta abrir o arquivo de indice.
+    {                                                               // Caso não consiga, imprime uma mensagem de erro e retorna ERRO.
+        fprintf(stderr, "Erro na abertura do arquivo de indice\n"); //
+        return ERRO;    //código de erro                            //
     }
-    int raiz;
-    carregaRaiz(&raiz, indice);
-    pagina atual;                               //página auxiliar para buscar na árvore
-    if(carregaPagina(&atual, raiz, indice) == NAOENCONTRADO)
+    int raiz;                                                 // Carrega o RRN da raiz da Árvore-B e armazena na variável "raiz".
+    carregaRaiz(&raiz, indice);                               //
+    pagina atual;
+    if(carregaPagina(&atual, raiz, indice) == NAOENCONTRADO)  // Utiliza o RRN acima para carregar a página referente à raiz.
     {
-        fclose(indice);
-        return NAOENCONTRADO;
+        fclose(indice);                                       // Caso o RRN passado como argumento for menor do que zero (não existe raiz)
+        return NAOENCONTRADO;                                 // fecha o arquivo de indice e retorna "chave não encontrada".
     }
-    chave buscaChave;
-    buscaChave.id = id;
-    if(buscaAux(atual, &buscaChave, indice) == NAOENCONTRADO)
-    {
-        fclose(indice);
-        return NAOENCONTRADO;   //retorna o código de "chave não encontrada"
+    chave buscaChave;                                         // Armazena numa variável do tipo "chave" o ID da chave a ser buscada
+    buscaChave.id = id;                                       // Em seguida, chama uma função auxiliar que percorrerá a Árvore-B em busca
+    if(buscaAux(atual, &buscaChave, indice) == NAOENCONTRADO) // da chave, a qual será armazenada em "buscaChave".
+    {                                                         //
+        fclose(indice);                                       // Caso essa função retorne "chave não encontrada", fecha o arquivo de indice
+        return NAOENCONTRADO;                                 // e retorna NAOENCONTRADO.
     }
     fclose(indice);
-    *byteoffset = buscaChave.byteoffset;
+    *byteoffset = buscaChave.byteoffset;                      // Escreve o byteoffset da chave encontrada no ponteiro passado como parâmetro.
 
-    FILE* dados;
-    if((dados = fopen("dados.dad", "rb")) == NULL)
-    {
-        fprintf(stderr, "Erro na abertura do arquivo de dados\n");
-        return ERRO;              //código de erro
+    FILE* dados;                                                    //
+    if((dados = fopen("dados.dad", "rb")) == NULL)                  // Tenta abrir o arquivo de dados.
+    {                                                               // Caso não consiga, imprime uma mensagem de erro e retorna ERRO.
+        fprintf(stderr, "Erro na abertura do arquivo de dados\n");  //
+        return ERRO;    //código de erro                            //
     }
-    fseek(dados, buscaChave.byteoffset, SEEK_SET);  //posiciona o ponteiro do arquivo de dados no registro desejado
-    if(carregaRegistro(registro, dados) == ERRO)
-        return NAOENCONTRADO;
-    fclose(dados);
-    return ENCONTRADO;                          //código de "chave encontrada"
+    fseek(dados, buscaChave.byteoffset, SEEK_SET);  // Posiciona o ponteiro do arquivo de dados no registro a ser recuperado.
+    if(carregaRegistro(registro, dados) == ERRO)    // Carrega esse registro do arquivo e armazena no ponteiro passado como parâmetro.
+        return NAOENCONTRADO;                       // Caso a leitura não seja bem sucedida, retorna "registro não encontrado".
+    fclose(dados);                                  // Fecha o arquivo de dados.
+    return ENCONTRADO;                              // Retorna o código para "chave e registro encontrados".
 }
 
+//Função de busca auxiliar que recebe uma página e executa a busca de uma chave a partir dessa página.
 int buscaAux(pagina atual, chave* buscaChave, FILE* indice)
 {
-    int pos;
-    while((pos = buscaBinaria(atual.chaves, buscaChave, 0, atual.tam-1)) != ENCONTRADO)
-    {
-        if(carregaPagina(&atual, atual.filhos[pos], indice) == NAOENCONTRADO)
-            return NAOENCONTRADO;
-    }
-    return pos;
-}
+    int pos;                                                                            //
+    while((pos = buscaBinaria(atual.chaves, buscaChave, 0, atual.tam-1)) != ENCONTRADO) // Executa uma busca binária no vetor de chaves da página.
+    {                                                                                   // Armazena em "pos" a posição onde a chave buscada deveria estar.
+        if(carregaPagina(&atual, atual.filhos[pos], indice) == NAOENCONTRADO)           // Acessa o filho da página atual na posição indicada por "pos".
+            return NAOENCONTRADO;                                                       // Armazena a página filha em "atual" e reinicia o loop realizando
+    }                                                                                   // a busca na nova página até que a chave seja encontrada.
+    return pos;                                                                         // Caso "pos" seja "NAOENCONTRADO", retorna esse valor.
+}                                                                                       //
 
+//Função que executa uma busca binária em um vetor de chaves em busca de um ID.
+//Retorna o byteoffset do registro correspondente através do ponteiro "novaChave".
 int buscaBinaria(chave chaves[], chave* novaChave, int esq, int dir)
 {
-    if(esq == dir)
-    {
-        if(novaChave->id < chaves[esq].id)
-            return esq;
-        else if(novaChave->id > chaves[esq].id)
-            return esq+1;
-        else
-        {
-            novaChave->byteoffset = chaves[esq].byteoffset;
-            return ENCONTRADO;      //Chave já está na arvore
-        }
+    if(esq == dir)                                          //
+    {                                                       // Base da recursão: quando sobra apenas uma chave a ser comparada
+        if(novaChave->id < chaves[esq].id)                  //
+            return esq;                                     // Compara o ID a ser buscado com o ID da última chave a ser comparada.
+        else if(novaChave->id > chaves[esq].id)             // Caso seja menor, retorna a posição à esquerda dessa chave.
+            return esq+1;                                   // Caso seja maior, retorna a posição à direita dessa chave.
+        else                                                //
+        {                                                   // Caso contrário, ambos são iguais e a chave buscada já se encontra na Árvore-B.
+            novaChave->byteoffset = chaves[esq].byteoffset; // Escreve o byteoffset da chave buscada no ponteiro "novaChave".
+            return ENCONTRADO;                              // Retorna o código para "chave encontrada".
+        }                                                   //
     }
 
-    int mid = (esq + dir)/2;
+    int mid = (esq + dir)/2;                        // Calcula a posição média do intervalo a ser buscado, utilizada para restringir a busca.
 
-    if(novaChave->id < chaves[mid].id)
-   		return buscaBinaria(chaves, novaChave, esq, mid);
-
-    else if(novaChave->id > chaves[mid].id)
-    	return buscaBinaria(chaves, novaChave, mid+1, dir);
-
-    else
-    {
-        novaChave->byteoffset = chaves[mid].byteoffset;
-        return ENCONTRADO;      //Chave já está na arvore
-    }
+    if(novaChave->id < chaves[mid].id)                      //
+   		return buscaBinaria(chaves, novaChave, esq, mid);   // Compara o ID a ser buscado com o ID da chave de posição média do vetor.
+                                                            //
+    else if(novaChave->id > chaves[mid].id)                 // Caso seja menor, chama a recursão para a metade esquerda do intervalo.
+    	return buscaBinaria(chaves, novaChave, mid+1, dir); // Caso seja maior, chama a recursão para a metade direita do intervalo.
+                                                            //
+    else                                                    // Caso contrário, ambos são iguais e a chave buscada já se encontra na Árvore-B.
+    {                                                       // Escreve o byteoffset da chave buscada no ponteiro "novaChave".
+        novaChave->byteoffset = chaves[mid].byteoffset;     // Retorna o código para "chave encontrada".
+        return ENCONTRADO;                                  //
+    }                                                       //
 }
 
+//Função que lê a página do arquivo de indice a partir de um RRN passado como parâmetro.
 int carregaPagina(pagina* atual, int RRN, FILE* indice)
 {
     if(RRN < 0)

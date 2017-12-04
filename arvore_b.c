@@ -90,108 +90,6 @@ int buscaBinaria(chave chaves[], chave* novaChave, int esq, int dir)
     }                                                       //
 }
 
-// Função que lê a página do arquivo de indice a partir de um RRN passado como parâmetro.
-int carregaPagina(pagina* atual, int RRN, FILE* indice)
-{
-    if(RRN < 0)                                                  // Se o RRN for -1 (Árvore vazia ou filho de uma folha)
-        return NAOENCONTRADO;                                    // retorna código para "página não encontrada".
-    fseek(indice, RRN*sizeof(pagina) + 2*sizeof(int), SEEK_SET); // Posiciona o ponteiro do arquivo na posição da página indicada pelo RRN.
-    fread(atual, sizeof(pagina), 1, indice);                     // Lê a página do arquivo e armazena no ponteiro "atual".
-    return ENCONTRADO;                                           // Retorna código para "página encontrada".
-}
-
-// Função que lê o RRN da raiz da Árvore no cabeçalho do arquivo de indice.
-void carregaRaiz(int* raiz, FILE* indice)
-{
-    rewind(indice);                         // Posiciona o ponteiro no arquivo no começo do cabeçalho.
-    fread(raiz, sizeof(int), 1, indice);    // Lê o primeiro inteiro correspondente ao RRN da raiz e armazena no ponteiro "raiz".
-}
-
-// Função que grava uma página no arquivo na posição indicada pelo RRN.
-void escrevePagina(pagina atual, int RRN, FILE* indice)
-{
-    fseek(indice, RRN*sizeof(pagina) + 2*sizeof(int), SEEK_SET);  // Posiciona o ponteiro do arquivo na posição desejada de escrita.
-    fwrite(&atual, sizeof(pagina), 1, indice);                    // Escreve a página "atual" nessa posição do.
-}
-
-// Função que atualiza (ou escreve pela primeira vez) o cabeçalho do arquivo de indice.
-// Argumentos:
-//  raiz: RRN da raiz da Árvore-B.
-//  ultimo_rrn: maior RRN da Árvore-B, utilizada para criar novas páginas no split e na atualização da raiz.
-void escreveCabecalho(int raiz, int ultimo_rrn, FILE* indice)
-{
-    rewind(indice);                                 // Posiciona o ponteiro no arquivo no começo do cabeçalho.
-    fwrite(&raiz, sizeof(int), 1, indice);          // Escreve a variável raiz na primeira posição do cabeçalho.
-    fwrite(&ultimo_rrn, sizeof(int), 1, indice);    // Escreve a variável ultimo_rrn na segunda posição do cabeçalho.
-}
-
-// Função que grava no arquivo de log as operações executadas na Árvore-B.
-// Para isso, ela recebe uma string ("mensagem") a ser formatada posteriormente pelos possíveis argumentos recebidos à direita dela, similar ao printf.
-// Nesta função são utilizados os recursos da biblioteca stdarg.
-int gravarLog(const char* mensagem, ...)
-{
-    FILE* log;                                                           //
-    if((log = fopen("logVBorges.txt", "a")) == NULL)                     // Tenta abrir o arquivo de log.
-    {                                                                    //
-        fprintf(stderr, "Erro na abertura/criação do arquivo de log\n"); // Caso não consiga, imprime uma mensagem de erro e retorna ERRO.
-        return ERRO;    //código de erro                                 //
-    }
-    va_list argumentos;                         // Variável do tipo va_list com os argumentos a serem formatados na string da mensagem.
-    va_start(argumentos, mensagem);             // Inicializa a variável "argumentos" com os argumentos adicionais passados na chamada da função.
-    vfprintf(log, mensagem, argumentos);        // Imprime a mensagem formatada no arquivo log.
-    va_end(argumentos);                         // Chamada necessária para encerrar as operações feitas por va_start() antes do retorno da função.
-    fclose(log);                                // Fecha o arquivo de log.
-    return TRUE;                                // Retorna TRUE para indicar que não houve erro.
-}
-
-// Função que executa uma checagem da existência do arquivo de indice.
-// Caso não exista, cria o arquivo e inicializa o cabeçalho.
-int verificaIndice()
-{
-    FILE* indice;                                                       //
-    if((indice = fopen("arvore.idx", "r+b")) == NULL)                   // Tenta abrir o arquivo de indice.
-    {                                                                   //
-        if((indice = fopen("arvore.idx", "w+b")) == NULL)               // Caso ele não exista, tenta criar o mesmo.
-        {                                                               //
-            fprintf(stderr, "Erro na criação do arquivo de indice\n");  // Caso não consiga criar, imprime uma mensagem de erro e
-            return ERRO;    //código de erro                            // retorna o código de erro.
-        }                                                               //
-        int raiz = -1;                                                  // Caso consiga criar, inicializa a raiz com -1
-        int ultimo_rrn = 0;                                             // e o ultimo_rrn com 0.
-        escreveCabecalho(raiz, ultimo_rrn, indice);                     // Inicializa a raiz e o ultimo_rrn no cabeçalho do arquivo.
-    }                                                                   //
-    fclose(indice);                                                     // Fecha o arquivo de indice.
-    return TRUE;                                                        // Retorna TRUE para indicar que não houve erro.
-}
-
-// Função usada para construir (ou atualizar, caso já exista) o arquivo de indices a partir de um arquivo de dados já inserido.
-// Um laço percorre todo o arquivo de dados, armezenando os registros nele presente e os byteoffset de cada um deles
-//  em cada ciclo desse laço o registro tenta ser inserido na arvore, o qual só será inserido se não estiver
-//  presente nela. A condiçao de parada do laço é o fim do arquivo de dados.
-int atualizaArvore()
-{
-    gravarLog("Execucao da criacao do arquivo de indice arvore.idx com base no arquivo de dados dados.dad.\n");  //Escrita no Log
-    FILE* dados;
-    if((dados = fopen("dados.dad", "rb")) == NULL){                  // Tentativa de abrir o arquivo
-        fprintf(stderr, "Erro na leitura do arquivo de dados\n");    // Caso não consiga, imprime mensagem de erro e retorna ERRO.
-        return ERRO;    //código de erro
-    }
-    fseek(dados, sizeof(char), SEEK_SET);                            //Posiciona o ponteiro do arquivo após o cabeçalho de dados.
-    unsigned long byteoffset = ftell(dados);                         //Lê o byteoffset do primeiro registro.
-    tRegistro registro;                                              //Registro auxiliar para salvar as informações do arquivo de dados.
-    while(carregaRegistro(&registro, dados) != ERRO){                //Funçao que le do arquivo de dados e salva a informação lida no ponteiro passado como argumento.
-        if(busca(&registro, registro.id, &byteoffset) == ENCONTRADO) //Busca o ID obtido na Árvore-B.
-        {                                                            //Caso a chave já se encontre na Árvore-B (a busca retorne encontrado)
-            byteoffset = ftell(dados);                               // armazena o byteoffset do próximo registro
-            continue;                                                // e reinicia o loop (pulando a inserção na Árvore).
-        }
-        inserirAux(registro.id, byteoffset);                         //Chama a função que insere o registro na Árvore.
-        byteoffset = ftell(dados);                                   //Atualização do byteoffset do proximo registro do arquivo, para uma posterior inserção.
-    }
-    fclose(dados);                            // Fecha o arquivo de dados
-    return TRUE;                              // Retorna TRUE para indicar que não houve erro.
-}
-
 // Função que executa a inserção do registro no arquivo de dados e da sua chave correspondente no arquivo de indice.
 int inserir(int id, char titulo[], char genero[])
 {
@@ -319,74 +217,58 @@ int inserirArv(int RRN_atual, chave novaChave, chave* promo, int* RRN_filho, FIL
     byteoffset: em qual byteoffset o registro correspondente ao "id" se encontra no arquivo de dados
 */
 
+// Função que executa um 'split' de uma página e divide as chaves entre as páginas "atual" e "novaPagina", com promoção da chave mediana.
 int split(chave novaChave, int RRN_filho, pagina* atual, pagina* novaPagina, chave* promo, int* RRN_filho_promo)
 {
-    paginaAux temp;
-    int i, j;
+    paginaAux temp;                                      // Declara uma página auxiliar temporária que pode guardar 1 elemento a mais do que a página comum.
+    int i, j;                                            // Contadores para os laços.
     for(i = 0; i < atual->tam; i++)
-    {
-        temp.chaves[i] = atual->chaves[i];
-        temp.filhos[i] = atual->filhos[i];
+    {                                                    //
+        temp.chaves[i] = atual->chaves[i];               // Copia todas as chaves e filhos da página atual na página temporária.
+        temp.filhos[i] = atual->filhos[i];               //
     }
-    temp.filhos[atual->tam] = atual->filhos[atual->tam];
-    temp.tam = atual->tam;
-    atualizaPagina(temp.chaves, temp.filhos, &(temp.tam), novaChave, RRN_filho);
-    novaPagina->tam = 0;
+    temp.filhos[atual->tam] = atual->filhos[atual->tam]; // Copia o último filho, que não foi tratado no laço acima.
+    temp.tam = atual->tam;                               // Atribui o tamanho de "atual" ao tamanho da página temporária.
+    atualizaPagina(temp.chaves, temp.filhos, &(temp.tam), novaChave, RRN_filho); // Chama a função que insere a nova chave na posição correta da página temporária.
+    novaPagina->tam = 0;                                 // Inicializa o tamanho da nova página com 0.
     FILE* indice;
-    if((indice = fopen("arvore.idx", "r+b")) == NULL)
-    {
-        fprintf(stderr, "Erro na abertura do arquivo de indices\n");
-        return ERRO;              //código de erro
+    if((indice = fopen("arvore.idx", "r+b")) == NULL)                //
+    {                                                                // Tenta abrir o arquivo de indice.
+        fprintf(stderr, "Erro na abertura do arquivo de indices\n"); // Caso não consiga, imprime mensagem de erro e retorna ERRO.
+        return ERRO;    //código de erro                             //
     }
-    fseek(indice, sizeof(int), SEEK_SET);
-    int ultimo_rrn;
-    fread(&ultimo_rrn, sizeof(int), 1, indice);
-    int meio = temp.tam/2;
-    *promo = temp.chaves[meio];
-    *RRN_filho_promo = ultimo_rrn++;
-    fseek(indice, sizeof(int), SEEK_SET);
-    fwrite(&ultimo_rrn, sizeof(int), 1, indice);
-    fclose(indice);
+    fseek(indice, sizeof(int), SEEK_SET);               // Posiciona o ponteiro do arquivo de indice na segunda posição do cabeçalho.
+    int ultimo_rrn;                                     //
+    fread(&ultimo_rrn, sizeof(int), 1, indice);         // Lê o último RRN disponível na Árvore do arquivo de indice.
+    int meio = temp.tam/2;                              // Calcula a posição média do vetor de chaves da página temporária.
+    *promo = temp.chaves[meio];                         // Promove a chave que está nessa posição média.
+    *RRN_filho_promo = ultimo_rrn++;                    // O RRN da página filha à direita da chave promovida será o último RRN disponível na Árvore,
+                                                        // que também será o RRN da nova página. Em seguida, na mesma linha, incrementa o último RRN.
+    fseek(indice, sizeof(int), SEEK_SET);               // Posiciona novamente o ponteiro do arquivo de indice na segunda posição do cabeçalho.
+    fwrite(&ultimo_rrn, sizeof(int), 1, indice);        // Escreve o ultimo_rrn incrementado de volta no cabeçalho do arquivo.
+    fclose(indice);                                     // Fecha o arquivo de indice.
     for(i = 0; i < meio; i++)
-    {
-        atual->chaves[i] = temp.chaves[i];
-        atual->filhos[i] = temp.filhos[i];
+    {                                                   //
+        atual->chaves[i] = temp.chaves[i];              // Copia as chaves e filhos à esquerda da chave promovida para a página atual.
+        atual->filhos[i] = temp.filhos[i];              //
     }
-    atual->filhos[meio] = temp.filhos[meio];
-    atual->tam = meio;
-	i = meio + 1;
-	j = 0;
+    atual->filhos[meio] = temp.filhos[meio];            // Copia o filho à direita da última chave, que não foi tratado no laço acima.
+    atual->tam = meio;                                  // O novo tamanho da página atual será a posição do meio já calculada.
+	i = meio + 1;                                       // Inicializa os contadores para copiar as chaves à direita da chave promovida.
+	j = 0;                                              //
 	while(i < temp.tam)
-	{
-		novaPagina->chaves[j] = temp.chaves[i];
-        novaPagina->filhos[j] = temp.filhos[i];
-		i++;
-		j++;
+	{                                                   //
+		novaPagina->chaves[j] = temp.chaves[i];         // Copia as chaves e filhos à direita da chave promovida para a nova página.
+        novaPagina->filhos[j] = temp.filhos[i];         //
+		i++;                                            // Incrementa ambos contadores e reinicia o loop.
+		j++;                                            //
 	}
-	novaPagina->filhos[j] = temp.filhos[i];
-    novaPagina->tam = temp.tam - meio - 1;
-    return TRUE;
+	novaPagina->filhos[j] = temp.filhos[i];             // Copia o último filho, que não foi tratado no laço acima.
+    novaPagina->tam = temp.tam - meio - 1;              // O tamanho da nova página será dado por esse cálculo.
+    return TRUE;                                        // Retorna TRUE para indicar que não houve erro.
 }
 
-void atualizaPagina(chave chaves[], int filhos[], unsigned short* tam, chave novaChave, int RRN_filho)
-{
-    int pos = buscaBinaria(chaves, &novaChave, 0, *tam-1);
-    shiftDireita(chaves, filhos, pos, *tam);
-    chaves[pos] = novaChave;
-    filhos[pos+1] = RRN_filho;
-    (*tam)++;
-}
-
-void shiftDireita(chave chaves[], int filhos[], int inicial, int tam)
-{
-    int i;
-    for (i = tam; i > inicial; i--)
-    {
-        chaves[i] = chaves[i-1];
-        filhos[i+1] = filhos[i];
-    }
-}
-
+// Função que executa a impressão da Árvore-B no arquivo de log.
 int imprimeArvore()
 {
     gravarLog("Execucao de operacao para mostrar a arvore-B gerada:\n");
@@ -454,4 +336,127 @@ void imprimePagina(pagina atual, int nivel)
     }
     strcat(mensagem, "\n");
     gravarLog(mensagem);
+}
+
+// Função que lê a página do arquivo de indice a partir de um RRN passado como parâmetro.
+int carregaPagina(pagina* atual, int RRN, FILE* indice)
+{
+    if(RRN < 0)                                                  // Se o RRN for -1 (Árvore vazia ou filho de uma folha)
+        return NAOENCONTRADO;                                    // retorna código para "página não encontrada".
+    fseek(indice, RRN*sizeof(pagina) + 2*sizeof(int), SEEK_SET); // Posiciona o ponteiro do arquivo na posição da página indicada pelo RRN.
+    fread(atual, sizeof(pagina), 1, indice);                     // Lê a página do arquivo e armazena no ponteiro "atual".
+    return ENCONTRADO;                                           // Retorna código para "página encontrada".
+}
+
+// Função que lê o RRN da raiz da Árvore no cabeçalho do arquivo de indice.
+void carregaRaiz(int* raiz, FILE* indice)
+{
+    rewind(indice);                         // Posiciona o ponteiro no arquivo no começo do cabeçalho.
+    fread(raiz, sizeof(int), 1, indice);    // Lê o primeiro inteiro correspondente ao RRN da raiz e armazena no ponteiro "raiz".
+}
+
+// Função que grava uma página no arquivo na posição indicada pelo RRN.
+void escrevePagina(pagina atual, int RRN, FILE* indice)
+{
+    fseek(indice, RRN*sizeof(pagina) + 2*sizeof(int), SEEK_SET);  // Posiciona o ponteiro do arquivo na posição desejada de escrita.
+    fwrite(&atual, sizeof(pagina), 1, indice);                    // Escreve a página "atual" nessa posição do.
+}
+
+// Função que atualiza (ou escreve pela primeira vez) o cabeçalho do arquivo de indice.
+// Argumentos:
+//  raiz: RRN da raiz da Árvore-B.
+//  ultimo_rrn: maior RRN da Árvore-B, utilizada para criar novas páginas no split e na atualização da raiz.
+void escreveCabecalho(int raiz, int ultimo_rrn, FILE* indice)
+{
+    rewind(indice);                                 // Posiciona o ponteiro no arquivo no começo do cabeçalho.
+    fwrite(&raiz, sizeof(int), 1, indice);          // Escreve a variável raiz na primeira posição do cabeçalho.
+    fwrite(&ultimo_rrn, sizeof(int), 1, indice);    // Escreve a variável ultimo_rrn na segunda posição do cabeçalho.
+}
+
+// Função que grava no arquivo de log as operações executadas na Árvore-B.
+// Para isso, ela recebe uma string ("mensagem") a ser formatada posteriormente pelos possíveis argumentos recebidos à direita dela, similar ao printf.
+// Nesta função são utilizados os recursos da biblioteca stdarg.
+int gravarLog(const char* mensagem, ...)
+{
+    FILE* log;                                                           //
+    if((log = fopen("logVBorges.txt", "a")) == NULL)                     // Tenta abrir o arquivo de log.
+    {                                                                    //
+        fprintf(stderr, "Erro na abertura/criação do arquivo de log\n"); // Caso não consiga, imprime uma mensagem de erro e retorna ERRO.
+        return ERRO;    //código de erro                                 //
+    }
+    va_list argumentos;                         // Variável do tipo va_list com os argumentos a serem formatados na string da mensagem.
+    va_start(argumentos, mensagem);             // Inicializa a variável "argumentos" com os argumentos adicionais passados na chamada da função.
+    vfprintf(log, mensagem, argumentos);        // Imprime a mensagem formatada no arquivo log.
+    va_end(argumentos);                         // Chamada necessária para encerrar as operações feitas por va_start() antes do retorno da função.
+    fclose(log);                                // Fecha o arquivo de log.
+    return TRUE;                                // Retorna TRUE para indicar que não houve erro.
+}
+
+// Função que executa uma checagem da existência do arquivo de indice.
+// Caso não exista, cria o arquivo e inicializa o cabeçalho.
+int verificaIndice()
+{
+    FILE* indice;                                                       //
+    if((indice = fopen("arvore.idx", "r+b")) == NULL)                   // Tenta abrir o arquivo de indice.
+    {                                                                   //
+        if((indice = fopen("arvore.idx", "w+b")) == NULL)               // Caso ele não exista, tenta criar o mesmo.
+        {                                                               //
+            fprintf(stderr, "Erro na criação do arquivo de indice\n");  // Caso não consiga criar, imprime uma mensagem de erro e
+            return ERRO;    //código de erro                            // retorna o código de erro.
+        }                                                               //
+        int raiz = -1;                                                  // Caso consiga criar, inicializa a raiz com -1
+        int ultimo_rrn = 0;                                             // e o ultimo_rrn com 0.
+        escreveCabecalho(raiz, ultimo_rrn, indice);                     // Inicializa a raiz e o ultimo_rrn no cabeçalho do arquivo.
+    }                                                                   //
+    fclose(indice);                                                     // Fecha o arquivo de indice.
+    return TRUE;                                                        // Retorna TRUE para indicar que não houve erro.
+}
+
+// Função usada para construir (ou atualizar, caso já exista) o arquivo de indices a partir de um arquivo de dados já inserido.
+// Um laço percorre todo o arquivo de dados, armezenando os registros nele presente e os byteoffset de cada um deles
+//  em cada ciclo desse laço o registro tenta ser inserido na arvore, o qual só será inserido se não estiver
+//  presente nela. A condiçao de parada do laço é o fim do arquivo de dados.
+int atualizaArvore()
+{
+    gravarLog("Execucao da criacao do arquivo de indice arvore.idx com base no arquivo de dados dados.dad.\n");  //Escrita no Log
+    FILE* dados;
+    if((dados = fopen("dados.dad", "rb")) == NULL){                  // Tentativa de abrir o arquivo
+        fprintf(stderr, "Erro na leitura do arquivo de dados\n");    // Caso não consiga, imprime mensagem de erro e retorna ERRO.
+        return ERRO;    //código de erro
+    }
+    fseek(dados, sizeof(char), SEEK_SET);                            //Posiciona o ponteiro do arquivo após o cabeçalho de dados.
+    unsigned long byteoffset = ftell(dados);                         //Lê o byteoffset do primeiro registro.
+    tRegistro registro;                                              //Registro auxiliar para salvar as informações do arquivo de dados.
+    while(carregaRegistro(&registro, dados) != ERRO){                //Funçao que le do arquivo de dados e salva a informação lida no ponteiro passado como argumento.
+        if(busca(&registro, registro.id, &byteoffset) == ENCONTRADO) //Busca o ID obtido na Árvore-B.
+        {                                                            //Caso a chave já se encontre na Árvore-B (a busca retorne encontrado)
+            byteoffset = ftell(dados);                               // armazena o byteoffset do próximo registro
+            continue;                                                // e reinicia o loop (pulando a inserção na Árvore).
+        }
+        inserirAux(registro.id, byteoffset);                         //Chama a função que insere o registro na Árvore.
+        byteoffset = ftell(dados);                                   //Atualização do byteoffset do proximo registro do arquivo, para uma posterior inserção.
+    }
+    fclose(dados);                            // Fecha o arquivo de dados
+    return TRUE;                              // Retorna TRUE para indicar que não houve erro.
+}
+
+// Função que insere uma nova chave em um vetor chaves na posição correta (seguindo a ordenação crescente).
+void atualizaPagina(chave chaves[], int filhos[], unsigned short* tam, chave novaChave, int RRN_filho)
+{
+    int pos = buscaBinaria(chaves, &novaChave, 0, *tam-1);  // Executa uma busca binária no vetor para encontrar a posição correta da nova chave.
+    shiftDireita(chaves, filhos, pos, *tam);                // Faz um shift a direita de todas as chaves posteriores a "pos".
+    chaves[pos] = novaChave;                                // Insere a nova chave na posição correta do vetor.
+    filhos[pos+1] = RRN_filho;                              // Insere o RRN do filho direito da nova chave em sua posição correta.
+    (*tam)++;                                               // Incrementa o tamanho do vetor (e da página).
+}
+
+// Função que executa um shift a direita de todas as chaves posteriores a "inicio".
+void shiftDireita(chave chaves[], int filhos[], int inicio, int tam)
+{
+    int i;                              // Contador
+    for (i = tam; i > inicio; i--)      // Laço que começa do final do vetor e vai decrementando até chegar na posição inicio.
+    {
+        chaves[i] = chaves[i-1];        // Copia todas as chaves uma posição à frente.
+        filhos[i+1] = filhos[i];        // Copia todos os filhos uma posição à frente.
+    }
 }

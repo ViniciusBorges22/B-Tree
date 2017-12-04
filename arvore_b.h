@@ -40,21 +40,21 @@ paginaAux;  // Página auxiliar utilizada na função split
 
 int busca(tRegistro* registro, int id, unsigned long* byteoffset);
 int buscaAux(pagina atual, chave* buscaChave, FILE* indice);
+int buscaBinaria(chave chaves[], chave* novaChave, int esq, int dir);
+int inserir(int id, char titulo[], char genero[]);
+int inserirAux(int id, unsigned long byteoffset);
+int inserirArv(int RRN_atual, chave novaChave, chave* promo, int* RRN_filho, FILE* indice);
+int split(chave novaChave, int RRN_filho, pagina* atual, pagina* novaPagina, chave* promo, int* RRN_filho_promo);
+int imprimeArvore();
+void imprimePagina(pagina atual, int nivel);
 int carregaPagina(pagina* atual, int RRN, FILE* indice);
 void carregaRaiz(int* raiz, FILE* indice);
 void escrevePagina(pagina atual, int RRN, FILE* indice);
 void escreveCabecalho(int raiz, int contador, FILE* indice);
 int gravarLog(const char* format, ...);
 int verificaIndice();
-int buscaBinaria(chave chaves[], chave* novaChave, int esq, int dir);
 int atualizaArvore();
-int inserir(int id, char titulo[], char genero[]);
-int inserirAux(int id, unsigned long byteoffset);
-int inserirArv(int RRN_atual, chave novaChave, chave* promo, int* RRN_filho, FILE* indice);
-int split(chave novaChave, int RRN_filho, pagina* atual, pagina* novaPagina, chave* promo, int* RRN_filho_promo);
 void atualizaPagina(chave chaves[], int filhos[], unsigned short* tam, chave novaChave, int RRN_filho);
 void shiftDireita(chave chaves[], int filhos[], int inicial, int tam);
-int imprimeArvore();
-void imprimePagina(pagina atual, int nivel);
 
 #endif // ARVORE_B_H_INCLUDED

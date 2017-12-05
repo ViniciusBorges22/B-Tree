@@ -14,7 +14,8 @@ int main()
         return ERRO;                                                                    //
     }
     int menu = TRUE;                //Variável responsável pela repetição do menu.
-    int id, opt;                    //Variáveis para receber entradas do usuário: id recebe o ID a ser inserido e opt recebe a opção do menu.
+    int id;                         //Variável para receber o ID a ser inserido  ou buscado pelo usuário.
+    char opt;                       //Variável para receber a opção do menu.
     char buffer[50];                //Buffer para armazenar as entradas do usuário.
     unsigned long byteoffset;       //Variável para armazenar o byteoffset retornado da função de busca, para ser gravado no arqiuvo Log.
     tRegistro registro;             //registro auxiliar utilizado para a busca, para onde são retornados o título e gênero da música buscada.
@@ -31,13 +32,13 @@ int main()
         printf("\n Opcao: ");                                            //
 
         fgets(buffer, 50, stdin);                       //Leitura da opção digitada do Menu
-        sscanf(buffer, "%d", &opt);                     //Formataçao da entrada
+        sscanf(buffer, "%c", &opt);                     //Formataçao da entrada
         char limitante2 = '0', limitante1 = '0';        //Declaracao dos auxiliares usados na funcao do tratamentoEntrada
         char auxid[50];                                 //String auxiliar do ID, ja que o tratamentoEntrada é feito com Strings
 
         switch(opt){        //Switch da escolha do menu
 
-            case 1:                                                                 //Caso seja escolhida a opção 1, o arquivo de indíces é criado a partir de um arquivo de dados já pronto
+            case '1':                                                                 //Caso seja escolhida a opção 1, o arquivo de indíces é criado a partir de um arquivo de dados já pronto
                 if(checagem(TRUE) == ERRO)                                          //Executa a funcão checagem e faz uma verificação de erro. Caso ocorra um erro, exibe uma mensagem na tela.
                 {
                     fprintf(stderr, "\nErro na criacao da arvore. Pressione qualquer tecla para continuar...");
@@ -45,7 +46,7 @@ int main()
                 }
                 break;
 
-            case 2:                                                                 //Caso seja escolhida a opção 2, uma inserção é realizada
+            case '2':                                                                 //Caso seja escolhida a opção 2, uma inserção é realizada
                 printf("\n Titulo: ");
                 char titulo[50];                                                    //String para armazenar a entrada após os tratamentos de entrada
                 limitante1 = '0';                                                   //primeiro alfanumérico
@@ -70,7 +71,7 @@ int main()
                 }
                 break;
 
-            case 3:                                                                  //Caso seja escolhida a opção 3, uma busca pelo ID solicitado é realizada na árvore
+            case '3':                                                                  //Caso seja escolhida a opção 3, uma busca pelo ID solicitado é realizada na árvore
                 printf("\n ID: ");
 
                 limitante1 = '0'; //Numero 0.
@@ -86,7 +87,7 @@ int main()
                     gravarLog("Chave <%d> nao encontrada\n", id); //grava no arquivo Log que a chave nao foi encontrada.
                 break;
 
-            case 4:                                                                 //Caso seja escolhida a opção 4, executa a impressão da árvore.
+            case '4':                                                                 //Caso seja escolhida a opção 4, executa a impressão da árvore.
                 if(imprimeArvore() == ERRO)                                         //Executa a função de impressão da árvore no arquivo Log e verifica a existência de erro.
                 {
                     fprintf(stderr, "\nErro na impressao da arvore. Pressione qualquer tecla para continuar...");
@@ -95,7 +96,7 @@ int main()
                 break;
 
 
-            case 0:                 //Caso seja escolhida a opção 0, o programa é finalizado.
+            case '0':                 //Caso seja escolhida a opção 0, o programa é finalizado.
                 menu = FALSE;       //Coloca a variável do laço para falso, saindo do loop de exibição do menu.
                 break;
 

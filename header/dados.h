@@ -8,8 +8,8 @@
 typedef struct
 {
     int id;
-    char titulo[30];
-    char genero[20];
+    char titulo[50];
+    char genero[50];
 }
 tRegistro;
 

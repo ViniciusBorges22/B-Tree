@@ -1,19 +1,14 @@
-# Created by https://www.gitignore.io/api/codeblocks
-
-### CodeBlocks ###
-# specific to CodeBlocks IDE
-*.layout
-*.depend
-
-# generated directories
-bin/
-obj/
-
-# End of https://www.gitignore.io/api/codeblocks
-
+# Índice da B-Tree
 arvore.idx
+
+# Arquivo de dados
 dados.dad
-*.txt
+
+# Arquivo de log
+logVBorges.txt
 
 # Executável
-arvore-b
+music_manager
+
+# Cache do ccls
+.ccls-cache

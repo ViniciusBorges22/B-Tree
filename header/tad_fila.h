@@ -3,7 +3,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "arvore_b.h"
+
+#include <arvore_b.h>
 
 typedef pagina elem;        //tipo de dados
 

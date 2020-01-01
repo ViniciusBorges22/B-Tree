@@ -1,7 +1,7 @@
 #ifndef ARVORE_B_H_INCLUDED
 #define ARVORE_B_H_INCLUDED
 
-#include "dados.h"
+#include <dados.h>
 
 #define ORDEM 5 // Ordem da árvore.
 

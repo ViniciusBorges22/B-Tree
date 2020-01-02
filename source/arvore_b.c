@@ -389,7 +389,7 @@ void escreveCabecalho(int raiz, int ultimo_rrn, FILE* indice)
 int gravarLog(const char* mensagem, ...)
 {
     FILE* log;
-    if((log = fopen("logVBorges.txt", "a")) == NULL)
+    if((log = fopen("log.txt", "a")) == NULL)
     {
         fprintf(stderr, "Erro na abertura/criação do arquivo de log\n");
         return ERRO;

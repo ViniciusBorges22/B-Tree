@@ -17,24 +17,24 @@
 
 typedef struct
 {
-    int id;                     // ID da música.
-    unsigned long byteoffset;   // Posição do registro desejado no arquivo de dados.
+	int id;                     // ID da música.
+	unsigned long byteoffset;   // Posição do registro desejado no arquivo de dados.
 }
 chave;
 
 typedef struct
 {
-    unsigned short tam;     // Quantidade de chaves armazenadas na página.
-    chave chaves[ORDEM-1];  // Vetor de chaves.
-    int filhos[ORDEM];      // "Ponteiros" (RRN) para os filhos da página.
+	unsigned short tam;     // Quantidade de chaves armazenadas na página.
+	chave chaves[ORDEM-1];  // Vetor de chaves.
+	int filhos[ORDEM];      // "Ponteiros" (RRN) para os filhos da página.
 }
 pagina;     // Página (nó) da árvore.
 
 typedef struct
 {
-    unsigned short tam;
-    chave chaves[ORDEM];
-    int filhos[ORDEM+1];
+	unsigned short tam;
+	chave chaves[ORDEM];
+	int filhos[ORDEM+1];
 }
 paginaAux;  // Página auxiliar utilizada na função split.
 

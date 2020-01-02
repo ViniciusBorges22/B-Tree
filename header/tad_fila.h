@@ -9,13 +9,13 @@
 typedef pagina elem;        //tipo de dados
 
 typedef struct bloco{
-    elem info;              //elemento da fila
-    struct bloco* prox;     //ponteiro para o próximo
+	elem info;              //elemento da fila
+	struct bloco* prox;     //ponteiro para o próximo
 }no;                        //nó da fila
 
 typedef struct{
-   no* inicio;              //ponteiro para o inicio da fila
-   no* fim;                 //ponteiro para o fim da fila
+	no* inicio;              //ponteiro para o inicio da fila
+	no* fim;                 //ponteiro para o fim da fila
 }fila;
 
 void criarFila(fila* L);

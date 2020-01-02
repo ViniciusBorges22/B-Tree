@@ -20,4 +20,4 @@ gdb music_manager
 ## Usage
 On running you'll be presented with a simple interactive menu, earch option is represented by a number and can be
 accessed by typing the correspondent number and pressing Enter.<br>
-All operations's outputs will be recorded only in the **log.txt** file.<br>
+All operations's outputs will be printed only in the **log.txt** file.<br>

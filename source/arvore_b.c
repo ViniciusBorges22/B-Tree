@@ -3,17 +3,20 @@
 #include <string.h>
 #include <stdarg.h>
 
-#include <arvore_b.h>
 #include <tad_fila.h>
+
+const char* btree_file = "btree.idx";
+const char* data_file = "data.dad";
+const char* log_file = "log.txt";
 
 // Função que busca uma chave na Árvore-B através de um ID passado como parâmetro.
 // Em seguida, retorna o registro buscado e o byteoffset dele no arquivo de dados atrás de parâmetros.
 int busca(tRegistro* registro, int id, unsigned long* byteoffset)
 {
 	FILE* indice;
-	if((indice = fopen("arvore.idx", "rb")) == NULL)
+	if((indice = fopen(btree_file, "rb")) == NULL)
 	{
-		fprintf(stderr, "Erro na abertura do arquivo de indice\n");
+		fprintf(stderr, "Error: could not open index file\n");
 		return ERRO;
 	}
 	int raiz;
@@ -35,9 +38,9 @@ int busca(tRegistro* registro, int id, unsigned long* byteoffset)
 	*byteoffset = buscaChave.byteoffset;
 
 	FILE* dados;
-	if((dados = fopen("dados.dad", "rb")) == NULL)
+	if((dados = fopen(data_file, "rb")) == NULL)
 	{
-		fprintf(stderr, "Erro na abertura do arquivo de dados\n");
+		fprintf(stderr, "Error: could not open data file\n");
 		return ERRO;
 	}
 	fseek(dados, buscaChave.byteoffset, SEEK_SET);
@@ -94,18 +97,18 @@ int buscaBinaria(chave chaves[], chave* novaChave, int esq, int dir)
 // Função que executa a inserção do registro no arquivo de dados e da sua chave correspondente no arquivo de indice.
 int inserir(int id, char titulo[], char genero[])
 {
-	gravarLog("Execucao de operacao de INSERCAO de <%d>, <%s>, <%s>.\n", id, titulo, genero);
+	gravarLog("INSERTION operation of <%d>, <%s>, <%s>.\n", id, titulo, genero);
 	tRegistro registro;
 	unsigned long byteoffset;
 	if(busca(&registro, id, &byteoffset) == ENCONTRADO)
 	{
-		gravarLog("Chave <%d> duplicada.\n", id);
+		gravarLog("Duplicate key <%d>.\n", id);
 		return ENCONTRADO;
 	}
 	FILE* dados;
-	if((dados = fopen("dados.dad", "r+b")) == NULL)
+	if((dados = fopen(data_file, "r+b")) == NULL)
 	{
-		fprintf(stderr, "Erro na abertura do arquivo de dados\n");
+		fprintf(stderr, "Error: could not open data file\n");
 		return ERRO;
 	}
 	fseek(dados, 0, SEEK_END);
@@ -128,9 +131,9 @@ int inserirAux(int id, unsigned long byteoffset)
 	novaChave.byteoffset = byteoffset;
 	int raiz;
 	FILE* indice;
-	if((indice = fopen("arvore.idx", "r+b")) == NULL)
+	if((indice = fopen(btree_file, "r+b")) == NULL)
 	{
-		fprintf(stderr, "Erro na abertura do arquivo de indice\n");
+		fprintf(stderr, "Error: could not open index file\n");
 		return ERRO;
 	}
 	carregaRaiz(&raiz, indice);
@@ -152,7 +155,7 @@ int inserirAux(int id, unsigned long byteoffset)
 		escrevePagina(novaRaiz, raiz, indice);
 	}
 	if(valorRetorno != ERRO)
-		gravarLog("Chave <%d> inserida com sucesso.\n", id);
+		gravarLog("Key <%d> successfully inserted.\n", id);
 	fclose(indice);
 	return valorRetorno;
 }
@@ -197,8 +200,8 @@ int inserirArv(int RRN_atual, chave novaChave, chave* promo, int* RRN_filho, FIL
 			pagina novaPagina;
 			if(split(promoAux, RRN_filhoAux, &atual, &novaPagina, promo, RRN_filho) == ERRO)
 				return ERRO;
-			gravarLog("Divisao de no - pagina %d\n", RRN_atual);
-			gravarLog("Chave <%d> promovida\n", promo->id);
+			gravarLog("Node division - page %d\n", RRN_atual);
+			gravarLog("Key <%d> promoted\n", promo->id);
 			escrevePagina(atual, RRN_atual, indice);
 			escrevePagina(novaPagina, *RRN_filho, indice);
 			return PROMOCAO;
@@ -233,9 +236,9 @@ int split(chave novaChave, int RRN_filho, pagina* atual, pagina* novaPagina, cha
 	atualizaPagina(temp.chaves, temp.filhos, &(temp.tam), novaChave, RRN_filho);
 	novaPagina->tam = 0;
 	FILE* indice;
-	if((indice = fopen("arvore.idx", "r+b")) == NULL)
+	if((indice = fopen(btree_file, "r+b")) == NULL)
 	{
-		fprintf(stderr, "Erro na abertura do arquivo de indices\n");
+		fprintf(stderr, "Error: could not open index file\n");
 		return ERRO;
 	}
 	fseek(indice, sizeof(int), SEEK_SET);
@@ -272,13 +275,13 @@ int split(chave novaChave, int RRN_filho, pagina* atual, pagina* novaPagina, cha
 // Função que executa a impressão da Árvore-B no arquivo de log.
 int imprimeArvore()
 {
-	gravarLog("Execucao de operacao para mostrar a arvore-B gerada:\n");
+	gravarLog("Print B-Tree operation generated:\n");
 	fila f;
 	criarFila(&f);
 	FILE* indice;
-	if((indice = fopen("arvore.idx", "rb")) == NULL)
+	if((indice = fopen(btree_file, "rb")) == NULL)
 	{
-		fprintf(stderr, "Erro na abertura do arquivo de indice\n");
+		fprintf(stderr, "Error: could not open index file\n");
 		return ERRO;
 	}
 	int raiz;
@@ -286,13 +289,13 @@ int imprimeArvore()
 	pagina atual;
 	if(carregaPagina(&atual, raiz, indice) == NAOENCONTRADO)
 	{
-		gravarLog("Erro: Arvore-B nao encontrada\n");
+		gravarLog("Error: B-Tree file not found\n");
 		fclose(indice);
 		return NAOENCONTRADO;
 	}
 	if(inserirFila(&f, atual) == ERRO)
 	{
-		fprintf(stderr, "Erro na operacao de insercao na fila\n");
+		fprintf(stderr, "Error: could not insert into queue\n");
 		return ERRO;
 	}
 	int nivel = 0;
@@ -308,7 +311,7 @@ int imprimeArvore()
 		}
 		if(removerFila(&f, &atual) == ERRO)
 		{
-			fprintf(stderr, "Erro na operacao de remocao da fila\n");
+			fprintf(stderr, "Error: could not remove from queue\n");
 			return ERRO;
 		}
 		imprimePagina(atual, nivel);
@@ -321,7 +324,7 @@ int imprimeArvore()
 				break;
 			if(inserirFila(&f, aux) == ERRO)
 			{
-				fprintf(stderr, "Erro na operacao de insercao na fila\n");
+				fprintf(stderr, "Error: could not insert on queue\n");
 				return ERRO;
 			}
 		}
@@ -389,9 +392,9 @@ void escreveCabecalho(int raiz, int ultimo_rrn, FILE* indice)
 int gravarLog(const char* mensagem, ...)
 {
 	FILE* log;
-	if((log = fopen("log.txt", "a")) == NULL)
+	if((log = fopen(log_file, "a")) == NULL)
 	{
-		fprintf(stderr, "Erro na abertura/criação do arquivo de log\n");
+		fprintf(stderr, "Error: could not create or open log file\n");
 		return ERRO;
 	}
 	va_list argumentos;
@@ -407,11 +410,11 @@ int gravarLog(const char* mensagem, ...)
 int verificaIndice()
 {
 	FILE* indice;
-	if((indice = fopen("arvore.idx", "r+b")) == NULL)
+	if((indice = fopen(btree_file, "r+b")) == NULL)
 	{
-		if((indice = fopen("arvore.idx", "w+b")) == NULL)
+		if((indice = fopen(btree_file, "w+b")) == NULL)
 		{
-			fprintf(stderr, "Erro na criação do arquivo de indice\n");
+			fprintf(stderr, "Error: could not create index file\n");
 			return ERRO;
 		}
 		int raiz = -1;
@@ -428,10 +431,10 @@ int verificaIndice()
 //  presente nela. A condiçao de parada do laço é o fim do arquivo de dados.
 int atualizaArvore()
 {
-	gravarLog("Execucao da criacao do arquivo de indice arvore.idx com base no arquivo de dados dados.dad.\n");
+	gravarLog("Creation of index '%s' from data file '%s'\n", btree_file, data_file);
 	FILE* dados;
-	if((dados = fopen("dados.dad", "rb")) == NULL){
-		fprintf(stderr, "Erro na leitura do arquivo de dados\n");
+	if((dados = fopen(data_file, "rb")) == NULL){
+		fprintf(stderr, "Error: could not read data file\n");
 		return ERRO;
 	}
 	fseek(dados, sizeof(char), SEEK_SET);

@@ -10,7 +10,7 @@ int main()
 {
 	if(checagem(FALSE) == ERRO)
 	{
-		fprintf(stderr, "\nErro na checagem inicial dos arquivos de dados e indices.");
+		fprintf(stderr, "\nError checking data and index files");
 		getchar();
 		return ERRO;
 	}
@@ -24,12 +24,12 @@ int main()
 	while(menu){
 
 		printf("\n MENU\n");
-		printf("\n 1 - Criar arvore a partir do arquivo de dados.");
-		printf("\n 2 - Inserir novas musicas.");
-		printf("\n 3 - Busca por id.");
-		printf("\n 4 - Impressao da arvore.");
-		printf("\n 0 - Sair\n");
-		printf("\n Opcao: ");
+		printf("\n 1 - Create B-Tree from the data file");
+		printf("\n 2 - Insert a new music");
+		printf("\n 3 - Search by ID");
+		printf("\n 4 - Print the b-tree");
+		printf("\n 0 - Quit\n");
+		printf("\n Option: ");
 
 		fgets(buffer, 50, stdin);
 		sscanf(buffer, "%c", &opt);
@@ -41,19 +41,19 @@ int main()
 			case '1':
 				if(checagem(TRUE) == ERRO)
 				{
-					fprintf(stderr, "\nErro na criacao da arvore. Pressione qualquer tecla para continuar...");
+					fprintf(stderr, "\nError creating b-tree. Press any key to continue...");
 					getchar();
 				}
 				break;
 
 			case '2':
-				printf("\n Titulo: ");
+				printf("\n Title: ");
 				char titulo[50];
 				limitante1 = '0';
 				limitante2 = 'z';
 				tratamentoEntrada(titulo, limitante1, limitante2, TRUE);
 
-				printf(" Genero: ");
+				printf(" Genre: ");
 				char genero[50];
 				tratamentoEntrada(genero, limitante1, limitante2, TRUE);
 
@@ -66,7 +66,7 @@ int main()
 				int retornoInsere = inserir(id, titulo, genero);
 				if(retornoInsere == ERRO)
 				{
-					fprintf(stderr, "\nErro na insercao do arquivo. Pressione qualquer tecla para continuar...");
+					fprintf(stderr, "\nFile insertion error. Press any key to continue...");
 					getchar();
 				}
 				break;
@@ -79,18 +79,18 @@ int main()
 				tratamentoEntrada(auxid, limitante1, limitante2, FALSE);
 				id = atoi(auxid);
 
-				gravarLog("Execucao de operacao de PESQUISA de <%d>\n", id);
+				gravarLog("SEARCH operation execution by ID <%d>\n", id);
 
 				if(busca(&registro, id, &byteoffset) == ENCONTRADO)
-					gravarLog("Chave <%d> encontrada, offset <%li>, Titulo: <%s>, Genero: <%s>\n", id, byteoffset, registro.titulo, registro.genero);
+					gravarLog("Found key <%d>, offset <%li>, Title: <%s>, Genre: <%s>\n", id, byteoffset, registro.titulo, registro.genero);
 				else
-					gravarLog("Chave <%d> nao encontrada\n", id);
+					gravarLog("Key <%d> not found\n", id);
 				break;
 
 			case '4':
 				if(imprimeArvore() == ERRO)
 				{
-					fprintf(stderr, "\nErro na impressao da arvore. Pressione qualquer tecla para continuar...");
+					fprintf(stderr, "\nError printing the b-tree. Press any key to continue...");
 					getchar();
 				}
 				break;
@@ -163,7 +163,7 @@ void tratamentoEntrada(char str[], char limite1, char limite2, int espaco){
 			condicional = FALSE;
 		}
 		else
-			printf("\n Formato de entrada incorreto. Digite novamente: ");
+			printf("\n Wrong input format (forbidden characters).\nTry again: ");
 	}
 	return;
 }

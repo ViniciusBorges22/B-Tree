@@ -15,6 +15,10 @@
 #define PROMOCAO -4      // Valores de retorno utilizados na função de inserção na.
 #define NAOPROMOCAO -5   // árvore para indicar se houve ou não promoção de uma chave.
 
+extern const char* btree_file;
+extern const char* data_file;
+extern const char* log_file;
+
 typedef struct
 {
 	int id;                     // ID da música.

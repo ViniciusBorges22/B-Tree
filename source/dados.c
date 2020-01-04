@@ -11,11 +11,11 @@
 int checagem(int f1)
 {
 	FILE* dados;
-	if((dados = fopen("dados.dad", "r+b")) == NULL)
+	if((dados = fopen(data_file, "r+b")) == NULL)
 	{
-		if((dados = fopen("dados.dad", "w+b")) == NULL)
+		if((dados = fopen(data_file, "w+b")) == NULL)
 		{
-			fprintf(stderr, "Erro na criação do arquivo de dados\n");
+			fprintf(stderr, "Error: could not create data file\n");
 			return ERRO;
 		}
 		escreveCabecalhoDados(1, dados);
